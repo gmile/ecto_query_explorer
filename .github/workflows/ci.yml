@@ -13,6 +13,9 @@ jobs:
   ci:
     runs-on: ubuntu-24.04
 
+    env:
+      MIX_ENV: test
+
     steps:
     - uses: actions/checkout@v4
 

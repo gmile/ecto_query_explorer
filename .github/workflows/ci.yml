@@ -1,0 +1,33 @@
+name: Tests
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - main
+
+jobs:
+  ci:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install OTP and Elixir
+      id: setup-beam
+      uses: erlef/setup-beam@v1
+      with:
+        version-file: .tool-versions
+        version-type: strict
+
+    - name: Download and compile dependencies
+      run: mix deps.get + deps.compile
+
+    - name: Check formatting
+      run: mix format --check-formatted
+
+    - name: Compile
+      run: mix compile --warnings-as-errors
+
+    - name: Run tests
+      run: mix test

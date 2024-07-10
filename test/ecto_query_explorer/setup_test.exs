@@ -38,7 +38,7 @@ defmodule EctoQueryExplorer.SetupTest do
     test "correctly listens for telemetry events of different formats" do
       Application.put_env(:my_app, MyApp.Repo2, telemetry_prefix: [:just_repo2])
 
-      Application.put_all_env([
+      Application.put_all_env(
         ecto_query_explorer: [
           otp_app: :my_app,
           ets_table_name: :ecto_query_explorer_data,
@@ -50,7 +50,7 @@ defmodule EctoQueryExplorer.SetupTest do
             MyApp.Namespace.Repo
           ]
         ]
-      ])
+      )
 
       {:ok, _pid} = EctoQueryExplorer.start_link()
 
@@ -70,7 +70,7 @@ defmodule EctoQueryExplorer.SetupTest do
       :telemetry.execute([:my_app, :another_repo, :query], %{}, metadata)
       :telemetry.execute([:my_app, :namespace, :repo, :query], %{}, metadata)
 
-      EctoQueryExplorer.Data.dump2sqlite(:ecto_query_explorer_data, Repo)
+      EctoQueryExplorer.Data.dump2sqlite()
 
       assert 1 == Repo.one(from(q in Query, select: count(q.id)))
       assert 4 == Repo.one(from(s in Sample, select: count(s.id)))

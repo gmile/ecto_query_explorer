@@ -14,6 +14,13 @@ defmodule EctoQueryExplorer.DataTest do
 
   describe "dumps query correctly" do
     setup do
+      Application.put_all_env(
+        ecto_query_explorer: [
+          ets_table_name: :testing_data_dump,
+          repo: Repo
+        ]
+      )
+
       :ets.new(:testing_data_dump, [:ordered_set, :named_table])
 
       Application.put_env(:my_app, Repo,
@@ -64,7 +71,7 @@ defmodule EctoQueryExplorer.DataTest do
         {{:stacktraces, 59_205_549}, 1}
       ])
 
-      EctoQueryExplorer.Data.dump2sqlite(:testing_data_dump, Repo)
+      EctoQueryExplorer.Data.dump2sqlite()
 
       query =
         Repo.one(

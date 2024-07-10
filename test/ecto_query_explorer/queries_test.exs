@@ -11,6 +11,13 @@ defmodule EctoQueryExplorer.QueriesTest do
   end
 
   setup_all do
+    Application.put_all_env(
+      ecto_query_explorer: [
+        ets_table_name: :testing_data_dump,
+        repo: Repo
+      ]
+    )
+
     setup_app_repo()
 
     :ok
@@ -156,7 +163,7 @@ defmodule EctoQueryExplorer.QueriesTest do
       {{:stacktraces, 59_205_549}, 1}
     ])
 
-    EctoQueryExplorer.Data.dump2sqlite(:testing_data_dump, Repo)
+    EctoQueryExplorer.Data.dump2sqlite()
   end
 
   defp setup_app_repo do

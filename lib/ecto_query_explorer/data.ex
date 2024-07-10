@@ -1,4 +1,6 @@
 defmodule EctoQueryExplorer.Data do
+  require Logger
+
   alias EctoQueryExplorer.{
     Query,
     Sample,
@@ -8,6 +10,53 @@ defmodule EctoQueryExplorer.Data do
     Location,
     Params
   }
+
+  def ets_stats do
+    ets_table = Application.fetch_env!(:ecto_query_explorer, :ets_table_name)
+
+    %{
+      total_records: :ets.info(ets_table, :size),
+      total_memory: :ets.info(ets_table, :memory) * :erlang.system_info(:wordsize)
+    }
+  end
+
+  def repo_stats do
+    repo = Application.fetch_env!(:ecto_query_explorer, :repo)
+
+    sqlite_stats = """
+    with
+    records as (
+      select 'queries' name, count(1) total_records from queries
+      union
+      select 'samples' name, count(1) total_records from samples
+      union
+      select 'functions' name, count(1) total_records from functions
+      union
+      select 'locations' name, count(1) total_records from locations
+      union
+      select 'stacktraces' name, count(1) total_records from stacktraces
+      union
+      select 'stacktrace_entries' name, count(1) total_records from stacktrace_entries
+      union
+      select 'params' name, count(1) total_records from params
+    ),
+    sizes as (
+        select SUM(pgsize) bytes,
+               name
+          from dbstat
+         where name in ('queries', 'samples', 'functions', 'locations', 'stacktrace_entries', 'params', 'stacktraces')
+      group by name
+    )
+      select r.name,
+             total_records,
+             bytes
+        from records r
+        join sizes s on s.name = r.name
+    order by bytes desc
+    """
+
+    repo.query!(sqlite_stats)
+  end
 
   # change this to read configuration instead of passing parameters
   #

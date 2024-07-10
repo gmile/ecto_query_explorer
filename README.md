@@ -1,5 +1,7 @@
 # EctoQueryExplorer
 
+[![CI](https://github.com/gmile/ecto_query_explorer/actions/workflows/ci.yml/badge.svg)](https://github.com/gmile/ecto_query_explorer/actions/workflows/ci.yml)
+
 EctoQueryExplorer is a tool used to gather and analyse Ecto query telemetry.
 
 > [!WARNING]

@@ -17,7 +17,6 @@ defmodule EctoQueryExplorer.MixProject do
     [
       {:elixir_make, "~> 0.8"},
       {:telemetry, "~> 1.0"},
-      {:jason, "~> 1.0"},
       {:ecto_sqlite3, "~> 0.16"},
       {:postgrex, "~> 0.15", only: ~w(dev test)a}
     ]

@@ -143,7 +143,9 @@ defmodule EctoQueryExplorer.Data do
     insert_in_batches(repo, StacktraceEntry, stacktrace_entries_spec, ets_table)
     insert_params(repo, Params, params_spec, ets_table)
 
-    Logger.info("Collected data is now available to query using #{repo} repo (#{repo.config()[:database]} database)")
+    Logger.info(
+      "Collected data is now available to query using #{repo} repo (#{repo.config()[:database]} database)"
+    )
   end
 
   def insert_params(repo, schema, spec, ets_table) do

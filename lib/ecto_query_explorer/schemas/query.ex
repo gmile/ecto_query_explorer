@@ -1,7 +1,7 @@
 defmodule EctoQueryExplorer.Query do
   use Ecto.Schema
 
-  alias EctoQueryExplorer.{Sample, StacktraceEntry}
+  alias EctoQueryExplorer.Sample
 
   schema "queries" do
     field :text, :string

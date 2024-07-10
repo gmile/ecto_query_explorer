@@ -20,7 +20,6 @@ defmodule EctoQueryExplorer do
   @impl true
   def init(state) do
     :ets.new(state[:ets_table_name], [:ordered_set, :named_table])
-    :ets.new(:all, [:ordered_set, :named_table])
 
     events =
       Enum.map(

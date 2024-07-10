@@ -10,7 +10,7 @@ project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-## [v0.1.1] - 10-07-2024
+## [v0.1.1] - 2024-07-10
 
 ### Added
 
@@ -26,6 +26,6 @@ project adheres to [Semantic Versioning][semver].
 - Removed warnings due to all schema modules being in a single file
 - Rely on application configuration in more places
 
-## [v0.1.0] - 08-07-2024
+## [v0.1.0] - 2024-07-08
 
 - Initial release

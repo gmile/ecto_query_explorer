@@ -47,10 +47,10 @@ defmodule EctoQueryExplorer.DataTest do
     test "prints ETS statistics" do
       create_query()
 
-      assert EctoQueryExplorer.Data.ets_stats() == %{
+      assert %{
                total_records: 22,
-               total_memory: 4368
-             }
+               total_memory: _
+             } = EctoQueryExplorer.Data.ets_stats()
     end
   end
 

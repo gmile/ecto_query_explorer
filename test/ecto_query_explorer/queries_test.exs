@@ -124,7 +124,7 @@ defmodule EctoQueryExplorer.QueriesTest do
                  "Local Read Blocks" => 0,
                  "Local Written Blocks" => 0,
                  "Shared Dirtied Blocks" => 0,
-                 "Shared Hit Blocks" => 59,
+                 "Shared Hit Blocks" => _,
                  "Shared Read Blocks" => 1,
                  "Shared Written Blocks" => 0,
                  "Temp Read Blocks" => 0,

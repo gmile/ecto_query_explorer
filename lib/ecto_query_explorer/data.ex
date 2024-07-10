@@ -12,7 +12,7 @@ defmodule EctoQueryExplorer.Data do
   # change this to read configuration instead of passing parameters
   #
   def dump2sqlite do
-    table = Application.fetch_env!(:ecto_query_explorer, :ets_table_name)
+    ets_table = Application.fetch_env!(:ecto_query_explorer, :ets_table_name)
     repo = Application.fetch_env!(:ecto_query_explorer, :repo)
 
     queries_spec =
@@ -73,17 +73,17 @@ defmodule EctoQueryExplorer.Data do
     repo.delete_all(Location)
     repo.delete_all(Query)
 
-    insert_in_batches(repo, Query, queries_spec, table)
-    insert_in_batches(repo, Location, locations_spec, table)
-    insert_in_batches(repo, Function, functions_spec, table)
-    insert_in_batches(repo, Stacktrace, stacktraces_spec, table)
-    insert_in_batches(repo, Sample, samples_spec, table)
-    insert_in_batches(repo, StacktraceEntry, stacktrace_entries_spec, table)
-    insert_params(repo, Params, params_spec, table)
+    insert_in_batches(repo, Query, queries_spec, ets_table)
+    insert_in_batches(repo, Location, locations_spec, ets_table)
+    insert_in_batches(repo, Function, functions_spec, ets_table)
+    insert_in_batches(repo, Stacktrace, stacktraces_spec, ets_table)
+    insert_in_batches(repo, Sample, samples_spec, ets_table)
+    insert_in_batches(repo, StacktraceEntry, stacktrace_entries_spec, ets_table)
+    insert_params(repo, Params, params_spec, ets_table)
   end
 
-  def insert_params(repo, schema, spec, table) do
-    :ets.select(table, [spec])
+  def insert_params(repo, schema, spec, ets_table) do
+    :ets.select(ets_table, [spec])
     |> List.flatten()
     |> Enum.chunk_every(1000)
     |> Enum.each(fn chunk ->
@@ -92,12 +92,12 @@ defmodule EctoQueryExplorer.Data do
     end)
   end
 
-  def insert_in_batches(repo, schema, spec, table) do
+  def insert_in_batches(repo, schema, spec, ets_table) do
     result =
-      if is_atom(table) do
-        :ets.select(table, [spec], 1000)
+      if is_atom(ets_table) do
+        :ets.select(ets_table, [spec], 1000)
       else
-        :ets.select(table)
+        :ets.select(ets_table)
       end
 
     case result do

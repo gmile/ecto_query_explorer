@@ -118,7 +118,8 @@ defmodule EctoQueryExplorer.Data do
       {{:functions, :_}, :_, :_, :_, :_},
       {{:locations, :_}, :_, :_, :_},
       {{:stacktrace_entries, :_}, :_, :_, :_, :_},
-      {{:stacktraces, :_}, :_}
+      {{:stacktraces, :_}, :_},
+      {{:params, :_}, :_}
     ]
     |> Enum.each(fn item ->
       name = elem(elem(item, 0), 0)

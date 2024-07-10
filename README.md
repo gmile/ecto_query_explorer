@@ -84,7 +84,7 @@ Perform the following steps:
     config :ecto_query_explorer,
       otp_app: :my_app,
       repo: MyApp.EctoQueryExplorerRepo,
-      ets_table: :ets_query_explorer_data,
+      ets_table_name: :ets_query_explorer_data,
       source_ecto_repos: [
         MyApp.MyRepo
       ]

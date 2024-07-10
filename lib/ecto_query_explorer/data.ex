@@ -114,6 +114,21 @@ defmodule EctoQueryExplorer.Data do
     params_spec =
       {{{:params, :"$1"}, :"$2"}, [], [:"$2"]}
 
+    [
+      {{:queries, :_}, :_, :_, :_, :_},
+      {{:samples, :_}, :_, :_, :_, :_, :_, :_},
+      {{:functions, :_}, :_, :_, :_, :_},
+      {{:locations, :_}, :_, :_, :_},
+      {{:stacktrace_entries, :_}, :_, :_, :_, :_},
+      {{:stacktraces, :_}, :_}
+    ]
+    |> Enum.each(fn item ->
+      name = elem(elem(item, 0), 0)
+      count = :ets.select_count(ets_table, [{item, [], [true]}])
+
+      Logger.info("Preparing to dump #{count} #{name}")
+    end)
+
     repo.delete_all(Params)
     repo.delete_all(StacktraceEntry)
     repo.delete_all(Sample)
@@ -129,6 +144,8 @@ defmodule EctoQueryExplorer.Data do
     insert_in_batches(repo, Sample, samples_spec, ets_table)
     insert_in_batches(repo, StacktraceEntry, stacktrace_entries_spec, ets_table)
     insert_params(repo, Params, params_spec, ets_table)
+
+    Logger.info("Collected data is now available to query using #{repo} repo (#{repo.config()[:database]} database)")
   end
 
   def insert_params(repo, schema, spec, ets_table) do
@@ -154,9 +171,11 @@ defmodule EctoQueryExplorer.Data do
         :ok
 
       {items, :"$end_of_table"} ->
+        Logger.info("Inserted #{length(items)} records into #{inspect(schema)}")
         repo.insert_all(schema, items)
 
       {items, cont} ->
+        Logger.info("Inserted #{length(items)} records into #{inspect(schema)}")
         repo.insert_all(schema, items)
         insert_in_batches(repo, schema, spec, cont)
     end

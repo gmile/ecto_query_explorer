@@ -13,6 +13,14 @@ jobs:
   ci:
     runs-on: ubuntu-24.04
 
+    services:
+      postgresql:
+        image: postgres:16
+        ports:
+        - 5432:5432
+        env:
+          POSTGRES_HOST_AUTH_METHOD: "trust"
+
     env:
       MIX_ENV: test
 
@@ -34,9 +42,6 @@ jobs:
 
     - name: Compile
       run: mix compile --warnings-as-errors
-
-    - name: Start PostgreSQL
-      run: sudo systemctl start postgresql.service
 
     - name: Run tests
       run: mix test

@@ -96,7 +96,8 @@ Perform the following steps:
     # ...
     children = [
       # ...existing processes
-      EctoQueryExplorer
+      EctoQueryExplorer,
+      MyApp.EctoQueryExplorerRepo
     ]
     ```
 

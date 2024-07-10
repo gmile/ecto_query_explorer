@@ -61,14 +61,18 @@ Perform the following steps:
     end
     ```
 
-3. include the the following contents to `config/config.exs`:
+3. update `config/config.exs`:
 
     ```elixir
     # add EctoQueryExplorerRepo to the list of repositories
     config :my_app,
-      ecto_repos: [MyApp.MyRepo, MyApp.EctoQueryExplorerRepo]
+      ecto_repos: [
+        MyApp.MyRepo,
+        # ...existing repositories
+        MyApp.EctoQueryExplorerRepo
+      ]
 
-    # enable stacktraces in MyApp.MyRepo config
+    # add "stacktraces: true" option to all repositories you wish to collect telemetry from
     config :my_app, MyApp.MyRepo,
       stacktrace: true
 
@@ -76,7 +80,7 @@ Perform the following steps:
     config :my_app, MyApp.EctoQueryExplorerRepo,
       database: "/tmp/ecto-query-explorer-#{config_env()}.sqlite3"
 
-    # tell ecto_query_explorer about EctoQueryExplorerRepo
+    # configure ecto_query_explorer
     config :ecto_query_explorer,
       otp_app: :my_app,
       repo: MyApp.EctoQueryExplorerRepo,
@@ -91,7 +95,7 @@ Perform the following steps:
     ```elixir
     # ...
     children = [
-      MyApp.EctoQueryExplorerRepo,
+      # ...existing processes
       EctoQueryExplorer
     ]
     ```

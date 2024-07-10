@@ -31,6 +31,7 @@ SQLite3 schema looks like this:
 ### Caveats
 
 * EctoQueryExplorer will not attempt to persist data across application restarts,
+* subsequent dumping of data from ETS to SQLite3 database will override any existing data in SQLite3,
 * usage in clustered environments have not been tested,
 * the Readme file you're looking at is the only documentation right now.
 

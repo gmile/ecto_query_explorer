@@ -98,15 +98,14 @@ defmodule EctoQueryExplorer.Queries do
     end
   end
 
-  def top_queries(limit) do
+  def top_queries(limit \\ 10) do
     Application.get_env(:ecto_query_explorer, :repo).all(
       from q in Query,
         select: %{
           id: q.id,
-          text: q.text,
-          count: q.counter
+          count: q.counter,
+          text: q.text
         },
-        group_by: q.id,
         order_by: {:desc, q.counter},
         limit: ^limit
     )

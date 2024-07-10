@@ -196,6 +196,8 @@ The following convenience functions are provided by EctoQueryExplorer:
   * query the database using familiar Ecto queries. Examples:
   * query the file directly using `sqlite3` command line utility. Examples:
 
+* `EctoQueryExplorer.Queries.top_queries/1` - accepts a number, returns a list of most popular queries ordered by count
+
 ### Using Ecto queries
 
 ### Using `sqlite3` CLI utility

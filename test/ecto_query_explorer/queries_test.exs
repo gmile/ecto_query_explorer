@@ -136,6 +136,14 @@ defmodule EctoQueryExplorer.QueriesTest do
     end
   end
 
+  describe "top_queries" do
+    test "returns to N queries" do
+      create_query()
+
+      assert length(Queries.top_queries(1)) > 0
+    end
+  end
+
   def create_query do
     :ets.insert_new(:testing_data_dump, [
       {{:functions, 10_545_222}, "Elixir.Ecto.Repo.Supervisor", "tuplet", 2, 1},

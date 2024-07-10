@@ -74,8 +74,12 @@ Perform the following steps:
 
     # tell ecto_query_explorer about EctoQueryExplorerRepo
     config :ecto_query_explorer,
+      otp_app: :my_app,
       repo: MyApp.EctoQueryExplorerRepo,
-      otp_app: :my_app
+      ets_table: :ets_query_explorer_data,
+      source_ecto_repos: [
+        MyApp.MyRepo
+      ]
     ```
 
 4. update `application.ex`, include repository and library setup:
@@ -84,7 +88,7 @@ Perform the following steps:
     # ...
     children = [
       MyApp.EctoQueryExplorerRepo,
-      {EctoQueryExplorer, Application.get_all_env(:ecto_query_explorer)},
+      EctoQueryExplorer
     ]
     ```
 

@@ -38,12 +38,21 @@ defmodule EctoQueryExplorer.SetupTest do
     test "correctly listens for telemetry events of different formats" do
       Application.put_env(:my_app, MyApp.Repo2, telemetry_prefix: [:just_repo2])
 
-      {:ok, _pid} =
-        EctoQueryExplorer.start_link(
-          repo: Repo,
+      Application.put_all_env([
+        ecto_query_explorer: [
           otp_app: :my_app,
-          source_ecto_repos: [MyApp.Repo1, MyApp.Repo2, MyApp.AnotherRepo, MyApp.Namespace.Repo]
-        )
+          ets_table_name: :ecto_query_explorer_data,
+          repo: Repo,
+          source_ecto_repos: [
+            MyApp.Repo1,
+            MyApp.Repo2,
+            MyApp.AnotherRepo,
+            MyApp.Namespace.Repo
+          ]
+        ]
+      ])
+
+      {:ok, _pid} = EctoQueryExplorer.start_link()
 
       metadata = %{
         cast_params: nil,

@@ -3,10 +3,9 @@ defmodule EctoQueryExplorer do
 
   # Client
 
-  def start_link(options) do
+  def start_link(_options \\ []) do
     options =
-      options
-      |> Keyword.put_new(:ets_table_name, :ecto_query_explorer_data)
+      Application.get_all_env(:ecto_query_explorer)
       |> Keyword.put_new(:last_sample_id, 0)
 
     GenServer.start_link(__MODULE__, options, name: __MODULE__)

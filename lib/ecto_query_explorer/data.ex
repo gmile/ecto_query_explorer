@@ -11,14 +11,9 @@ defmodule EctoQueryExplorer.Data do
 
   # change this to read configuration instead of passing parameters
   #
-  def dump2sqlite(ets_table_name, repo) do
-    table =
-      if is_list(ets_table_name) do
-        {:ok, table} = :ets.file2tab(ets_table_name)
-        table
-      else
-        ets_table_name
-      end
+  def dump2sqlite do
+    table = Application.fetch_env!(:ecto_query_explorer, :ets_table_name)
+    repo = Application.fetch_env!(:ecto_query_explorer, :repo)
 
     queries_spec =
       {{{:queries, :"$1"}, :"$2", :"$3", :"$4", :"$5"}, [],

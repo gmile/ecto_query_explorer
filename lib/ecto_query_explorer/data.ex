@@ -58,8 +58,6 @@ defmodule EctoQueryExplorer.Data do
     repo.query!(sqlite_stats)
   end
 
-  # change this to read configuration instead of passing parameters
-  #
   def dump2sqlite do
     ets_table = Application.fetch_env!(:ecto_query_explorer, :ets_table_name)
     repo = Application.fetch_env!(:ecto_query_explorer, :repo)

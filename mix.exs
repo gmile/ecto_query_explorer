@@ -29,7 +29,7 @@ defmodule EctoQueryExplorer.MixProject do
       description: "A tool used to gather and analyse Ecto query telemetry",
       maintainers: ["Ievgen Pyrogov"],
       licenses: ["MIT"],
-      files: ["lib/*", "mix.exs", "README.md", "LICENSE"],
+      files: ["lib/*", "mix.exs", "README.md", "LICENSE", "CHANGELOG.md"],
       links: %{
         "GitHub" => "https://github.com/gmile/ecto_query_explorer"
       }

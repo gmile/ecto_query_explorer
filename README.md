@@ -221,7 +221,13 @@ Here are some examples:
 1. get top 5 most popular queries:
 
     ```sql
-    select counter, text from queries order by counter desc limit 5
+    select id, counter from queries order by counter desc limit 15
+    ```
+
+2. get top 5 most popular queries, with snippet:
+
+    ```sql
+    select id, counter, REPLACE(SUBSTR(q.text, 1, 150), char(10), \' \') snippet from queries q order by counter desc limit 10
     ```
 
 2. get top 5 most popular stacktraces:

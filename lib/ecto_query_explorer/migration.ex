@@ -65,6 +65,7 @@ defmodule EctoQueryExplorer.Migration0 do
     create_if_not_exists(index("samples", [:query_id, :stacktrace_id]))
     create_if_not_exists(index("functions", [:module, :function, :arity], unique: true))
     create_if_not_exists(index("locations", [:file, :line], unique: true))
+    create_if_not_exists(index("params", [:sample_id], unique: true))
 
     create_if_not_exists(
       index("stacktrace_entries", [:stacktrace_id, :function_id, :location_id, :index],
@@ -79,5 +80,6 @@ defmodule EctoQueryExplorer.Migration0 do
     drop_if_exists(table("functions"))
     drop_if_exists(table("locations"))
     drop_if_exists(table("stacktrace_entries"))
+    drop_if_exists(table("params"))
   end
 end

@@ -230,7 +230,19 @@ Here are some examples:
     select id from stacktraces order by counter desc limit 5
     ```
 
-3. find all queries that have at least 25 parameters in them:
+3. get stacktrace with function names and line numbers:
+
+    ```sql
+      select f.module || '.' || f.function || '/' || f.arity as mfa,
+             l.file || ':' || l.line as location
+        from stacktrace_entries se
+        join functions f on f.id = se.function_id
+        join locations l on l.id = se.location_id
+       where se.stacktrace_id = 86249873
+    order by se."index"'
+    ```
+
+4. find all queries that have at least 25 parameters in them:
 
     ```sql
     select id, text from queries where text like '%$25%' order by counter desc limit 5

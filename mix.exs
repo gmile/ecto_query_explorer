@@ -4,7 +4,7 @@ defmodule EctoQueryExplorer.MixProject do
   def project do
     [
       app: :ecto_query_explorer,
-      version: "0.1.1",
+      version: "0.1.2",
       elixir: "~> 1.17",
       package: package(),
       start_permanent: Mix.env() == :prod,

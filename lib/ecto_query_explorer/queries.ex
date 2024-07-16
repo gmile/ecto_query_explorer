@@ -1,7 +1,7 @@
 defmodule EctoQueryExplorer.Queries do
   import Ecto.Query
 
-  alias EctoQueryExplorer.{Query, Params}
+  alias EctoQueryExplorer.{Query, Sample, Params}
 
   def base_query do
     from q in Query,
@@ -64,38 +64,35 @@ defmodule EctoQueryExplorer.Queries do
     )
   end
 
-  def explain(query_id) do
-    query =
+  def explain(sample_id) do
+    %{
+      repo: repo,
+      text: text,
+      values: values
+    } =
       Application.get_env(:ecto_query_explorer, :repo).one!(
-        from [query: q] in base_query(), where: q.id == ^query_id
+        from s in Sample,
+          where: s.id == ^sample_id,
+          join: p in assoc(s, :params),
+          join: q in assoc(s, :query),
+          select: %{
+            repo: q.repo,
+            text: q.text,
+            values: p.values
+          }
       )
 
     explain_parameters = "analyze, costs, verbose, buffers, format json"
 
-    text = query.text
-    sample = List.first(query.samples)
-    params = sample.params
+    {:error, result} =
+      String.to_atom(repo).transaction(fn repo ->
+        %Postgrex.Result{rows: [[[result]]]} =
+          repo.query!("explain (#{explain_parameters}) #{text}", :erlang.binary_to_term(values))
 
-    if is_nil(params) do
-      {:error, :sample_with_params_not_found}
-    else
-      {:error, explain} =
-        String.to_atom(query.repo).transaction(fn repo ->
-          %Postgrex.Result{
-            rows: [
-              [[explain]]
-            ]
-          } =
-            repo.query!(
-              "explain (#{explain_parameters}) #{text}",
-              :erlang.binary_to_term(params.values)
-            )
+        repo.rollback(result)
+      end)
 
-          repo.rollback(explain)
-        end)
-
-      explain
-    end
+    result
   end
 
   def top_queries(limit \\ 10) do

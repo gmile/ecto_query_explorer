@@ -132,7 +132,7 @@ defmodule EctoQueryExplorer.QueriesTest do
                },
                "Planning Time" => _,
                "Triggers" => []
-             } = Queries.explain(129_284_157)
+             } = Queries.explain(123)
     end
   end
 

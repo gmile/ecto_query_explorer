@@ -10,6 +10,17 @@ project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
+## [v0.1.2]
+
+### Added
+
+- Re-purpose .explain function
+- More examples in README.md
+
+### Fixed
+
+- Update migration to include index for params table
+
 ## [v0.1.1] - 2024-07-10
 
 ### Added

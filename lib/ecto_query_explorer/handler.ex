@@ -57,20 +57,16 @@ defmodule EctoQueryExplorer.Handler do
           [file: file, line: line] = value ->
             id = :erlang.phash2(value)
 
-            unless :ets.insert_new(ets_table_name, {{:locations, id}, to_string(file), line, 1}) do
-              :ets.update_counter(ets_table_name, {:locations, id}, {4, 1})
-            end
+            :ets.insert_new(ets_table_name, {{:locations, id}, to_string(file), line})
 
             id
         end
 
       function_id = :erlang.phash2({module, function, arity})
 
-      function = {{:functions, function_id}, to_string(module), to_string(function), arity, 1}
+      function = {{:functions, function_id}, to_string(module), to_string(function), arity}
 
-      unless :ets.insert_new(ets_table_name, function) do
-        :ets.update_counter(ets_table_name, {:functions, function_id}, {5, 1})
-      end
+      :ets.insert_new(ets_table_name, function)
 
       stacktrace_entry_id = :erlang.phash2({stacktrace_id, function_id, location_id, index})
 

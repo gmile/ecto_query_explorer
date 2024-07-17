@@ -4,6 +4,5 @@ defmodule EctoQueryExplorer.Location do
   schema "locations" do
     field :file, :string
     field :line, :integer
-    field :counter, :integer
   end
 end

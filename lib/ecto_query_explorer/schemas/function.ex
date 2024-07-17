@@ -5,6 +5,5 @@ defmodule EctoQueryExplorer.Function do
     field :module, :string
     field :function, :string
     field :arity, :integer
-    field :counter, :integer
   end
 end

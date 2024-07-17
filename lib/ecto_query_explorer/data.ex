@@ -81,12 +81,11 @@ defmodule EctoQueryExplorer.Data do
        ]}
 
     functions_spec =
-      {{{:functions, :"$1"}, :"$2", :"$3", :"$4", :"$5"}, [],
-       [%{id: :"$1", module: :"$2", function: :"$3", arity: :"$4", counter: :"$5"}]}
+      {{{:functions, :"$1"}, :"$2", :"$3", :"$4"}, [],
+       [%{id: :"$1", module: :"$2", function: :"$3", arity: :"$4"}]}
 
     locations_spec =
-      {{{:locations, :"$1"}, :"$2", :"$3", :"$4"}, [],
-       [%{id: :"$1", file: :"$2", line: :"$3", counter: :"$4"}]}
+      {{{:locations, :"$1"}, :"$2", :"$3"}, [], [%{id: :"$1", file: :"$2", line: :"$3"}]}
 
     stacktrace_entries_spec =
       {{{:stacktrace_entries, :"$1"}, :"$2", :"$3", :"$4", :"$5"}, [],
@@ -115,8 +114,8 @@ defmodule EctoQueryExplorer.Data do
     [
       {{:queries, :_}, :_, :_, :_, :_},
       {{:samples, :_}, :_, :_, :_, :_, :_, :_},
-      {{:functions, :_}, :_, :_, :_, :_},
-      {{:locations, :_}, :_, :_, :_},
+      {{:functions, :_}, :_, :_, :_},
+      {{:locations, :_}, :_, :_},
       {{:stacktrace_entries, :_}, :_, :_, :_, :_},
       {{:stacktraces, :_}, :_},
       {{:params, :_, :_}, :_}

@@ -15,13 +15,11 @@ defmodule EctoQueryExplorer.Migration0 do
       add(:module, :string, null: false)
       add(:function, :string, null: false)
       add(:arity, :integer, null: false)
-      add(:counter, :integer, null: false)
     end
 
     create_if_not_exists table("locations") do
       add(:file, :string, null: false)
       add(:line, :integer, null: false)
-      add(:counter, :integer, null: false)
     end
 
     create_if_not_exists table("stacktraces") do

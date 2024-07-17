@@ -54,17 +54,17 @@ defmodule EctoQueryExplorer.HandlerTest do
 
     test "records unique functions only once, but updates counters", %{table: table} do
       assert [
-               {{:functions, _id1}, "Elixir.Module1", "fun1", 1, 2},
-               {{:functions, _id2}, "Elixir.Module3", "fun3", 3, 2},
-               {{:functions, _id3}, "Elixir.Module2", "fun2", 2, 2}
+               {{:functions, _id1}, "Elixir.Module1", "fun1", 1},
+               {{:functions, _id2}, "Elixir.Module3", "fun3", 3},
+               {{:functions, _id3}, "Elixir.Module2", "fun2", 2}
              ] = rows(table, :functions)
     end
 
     test "records unique locations only once, but updates counters", %{table: table} do
       assert [
-               {{:locations, _id1}, "lib/path/to/file2.ex", 20, 2},
-               {{:locations, _id2}, "lib/path/to/file3.ex", 30, 2},
-               {{:locations, _id3}, "lib/path/to/file1.ex", 10, 2}
+               {{:locations, _id1}, "lib/path/to/file2.ex", 20},
+               {{:locations, _id2}, "lib/path/to/file3.ex", 30},
+               {{:locations, _id3}, "lib/path/to/file1.ex", 10}
              ] = rows(table, :locations)
     end
 
@@ -139,21 +139,21 @@ defmodule EctoQueryExplorer.HandlerTest do
 
     test "records unique function only once", %{table: table} do
       assert [
-               {{:functions, _function_id1}, "Elixir.Module1", "fun1", 1, 1},
-               {{:functions, _function_id2}, "Elixir.Module3", "fun3", 3, 1},
-               {{:functions, _function_id3}, "Elixir.Module5", "fun5", 5, 2},
-               {{:functions, _function_id4}, "Elixir.Module4", "fun4", 4, 2},
-               {{:functions, _function_id5}, "Elixir.Module2", "fun2", 2, 1}
+               {{:functions, _function_id1}, "Elixir.Module1", "fun1", 1},
+               {{:functions, _function_id2}, "Elixir.Module3", "fun3", 3},
+               {{:functions, _function_id3}, "Elixir.Module5", "fun5", 5},
+               {{:functions, _function_id4}, "Elixir.Module4", "fun4", 4},
+               {{:functions, _function_id5}, "Elixir.Module2", "fun2", 2}
              ] = rows(table, :functions)
     end
 
     test "records unique locations only once", %{table: table} do
       assert [
-               {{:locations, _location_id1}, "lib/path/to/file5.ex", 50, 2},
-               {{:locations, _location_id2}, "lib/path/to/file2.ex", 20, 1},
-               {{:locations, _location_id3}, "lib/path/to/file3.ex", 30, 1},
-               {{:locations, _location_id4}, "lib/path/to/file1.ex", 10, 1},
-               {{:locations, _location_id5}, "lib/path/to/file4.ex", 40, 2}
+               {{:locations, _location_id1}, "lib/path/to/file5.ex", 50},
+               {{:locations, _location_id2}, "lib/path/to/file2.ex", 20},
+               {{:locations, _location_id3}, "lib/path/to/file3.ex", 30},
+               {{:locations, _location_id4}, "lib/path/to/file1.ex", 10},
+               {{:locations, _location_id5}, "lib/path/to/file4.ex", 40}
              ] = rows(table, :locations)
     end
   end
@@ -215,21 +215,21 @@ defmodule EctoQueryExplorer.HandlerTest do
 
     test "records unique functions only once, but updates counters", %{table: table} do
       assert [
-               {{:functions, _}, "Elixir.Module1", "fun1", 1, 1},
-               {{:functions, _}, "Elixir.Module3", "fun3", 3, 1},
-               {{:functions, _}, "Elixir.Module5", "fun5", 5, 1},
-               {{:functions, _}, "Elixir.Module4", "fun4", 4, 1},
-               {{:functions, _}, "Elixir.Module2", "fun2", 2, 1}
+               {{:functions, _}, "Elixir.Module1", "fun1", 1},
+               {{:functions, _}, "Elixir.Module3", "fun3", 3},
+               {{:functions, _}, "Elixir.Module5", "fun5", 5},
+               {{:functions, _}, "Elixir.Module4", "fun4", 4},
+               {{:functions, _}, "Elixir.Module2", "fun2", 2}
              ] = rows(table, :functions)
     end
 
     test "records unique locations only once, but updates counters", %{table: table} do
       assert [
-               {{:locations, _}, "lib/path/to/file5.ex", 50, 1},
-               {{:locations, _}, "lib/path/to/file2.ex", 20, 1},
-               {{:locations, _}, "lib/path/to/file3.ex", 30, 1},
-               {{:locations, _}, "lib/path/to/file1.ex", 10, 1},
-               {{:locations, _}, "lib/path/to/file4.ex", 40, 1}
+               {{:locations, _}, "lib/path/to/file5.ex", 50},
+               {{:locations, _}, "lib/path/to/file2.ex", 20},
+               {{:locations, _}, "lib/path/to/file3.ex", 30},
+               {{:locations, _}, "lib/path/to/file1.ex", 10},
+               {{:locations, _}, "lib/path/to/file4.ex", 40}
              ] = rows(table, :locations)
     end
   end
@@ -295,18 +295,18 @@ defmodule EctoQueryExplorer.HandlerTest do
 
     test "records unique functions only once, but updates counters", %{table: table} do
       assert [
-               {{:functions, _}, "Elixir.Module1", "fun1", 1, 2},
-               {{:functions, _}, "Elixir.Module3", "fun3", 3, 2},
-               {{:functions, _}, "Elixir.Module2", "fun2", 2, 2}
+               {{:functions, _}, "Elixir.Module1", "fun1", 1},
+               {{:functions, _}, "Elixir.Module3", "fun3", 3},
+               {{:functions, _}, "Elixir.Module2", "fun2", 2}
              ] = rows(table, :functions)
     end
 
     test "records unique locations only once, but updates counters", %{table: table} do
       assert [
-               {{:locations, 44_059_840}, "lib/path/to/file2.ex", 25, 1},
-               {{:locations, 52_641_331}, "lib/path/to/file2.ex", 20, 1},
-               {{:locations, 87_370_938}, "lib/path/to/file3.ex", 30, 2},
-               {{:locations, 90_889_579}, "lib/path/to/file1.ex", 10, 2}
+               {{:locations, 44_059_840}, "lib/path/to/file2.ex", 25},
+               {{:locations, 52_641_331}, "lib/path/to/file2.ex", 20},
+               {{:locations, 87_370_938}, "lib/path/to/file3.ex", 30},
+               {{:locations, 90_889_579}, "lib/path/to/file1.ex", 10}
              ] = rows(table, :locations)
     end
   end
@@ -373,17 +373,17 @@ defmodule EctoQueryExplorer.HandlerTest do
 
     test "records unique functions only once, but updates counters", %{table: table} do
       assert [
-               {{:functions, _}, "Elixir.Module1", "fun1", 1, 2},
-               {{:functions, _}, "Elixir.Module3", "fun3", 3, 2},
-               {{:functions, _}, "Elixir.Module2", "fun2", 2, 2}
+               {{:functions, _}, "Elixir.Module1", "fun1", 1},
+               {{:functions, _}, "Elixir.Module3", "fun3", 3},
+               {{:functions, _}, "Elixir.Module2", "fun2", 2}
              ] = rows(table, :functions)
     end
 
     test "records unique locations only once, but updates counters", %{table: table} do
       assert [
-               {{:locations, _}, "lib/path/to/file2.ex", 20, 2},
-               {{:locations, _}, "lib/path/to/file3.ex", 30, 2},
-               {{:locations, _}, "lib/path/to/file1.ex", 10, 2}
+               {{:locations, _}, "lib/path/to/file2.ex", 20},
+               {{:locations, _}, "lib/path/to/file3.ex", 30},
+               {{:locations, _}, "lib/path/to/file1.ex", 10}
              ] = rows(table, :locations)
     end
   end
@@ -447,19 +447,19 @@ defmodule EctoQueryExplorer.HandlerTest do
 
     test "records unique functions only once, but updates counters", %{table: table} do
       assert [
-               {{:functions, _}, "Elixir.Module1", "fun1", 1, 2},
-               {{:functions, _}, "Elixir.Module3", "fun3", 3, 1},
-               {{:functions, _}, "Elixir.Module4", "fun4", 4, 1},
-               {{:functions, _}, "Elixir.Module2", "fun2", 2, 2}
+               {{:functions, _}, "Elixir.Module1", "fun1", 1},
+               {{:functions, _}, "Elixir.Module3", "fun3", 3},
+               {{:functions, _}, "Elixir.Module4", "fun4", 4},
+               {{:functions, _}, "Elixir.Module2", "fun2", 2}
              ] = rows(table, :functions)
     end
 
     test "records unique locations only once, but updates counters", %{table: table} do
       assert [
-               {{:locations, _}, "lib/path/to/file2.ex", 20, 2},
-               {{:locations, _}, "lib/path/to/file3.ex", 30, 1},
-               {{:locations, _}, "lib/path/to/file1.ex", 10, 2},
-               {{:locations, _}, "lib/path/to/file4.ex", 40, 1}
+               {{:locations, _}, "lib/path/to/file2.ex", 20},
+               {{:locations, _}, "lib/path/to/file3.ex", 30},
+               {{:locations, _}, "lib/path/to/file1.ex", 10},
+               {{:locations, _}, "lib/path/to/file4.ex", 40}
              ] = rows(table, :locations)
     end
   end

@@ -81,7 +81,7 @@ defmodule EctoQueryExplorer.HandlerTest do
     end
   end
 
-  describe "tracking same query coming from different mfa and locations" do
+  describe "tracking same query coming from different stacktraces" do
     setup do
       metadata1 = %{
         params: [1, 2, 3],

@@ -71,7 +71,7 @@ defmodule EctoQueryExplorer.HandlerTest do
     test "records up to 3 params", %{table: table} do
       assert [
                {
-                 {:params, _query_id},
+                 {:params, _query_id, _stacktrace_id},
                  [
                    {2, 200, <<131, 107, 0, 3, 1, 2, 3>>},
                    {1, 100, <<131, 107, 0, 3, 1, 2, 3>>}
@@ -465,7 +465,7 @@ defmodule EctoQueryExplorer.HandlerTest do
   end
 
   describe "stores query params" do
-    test "for 3 top samples" do
+    test "for 3 first samples for same query and stacktrace" do
       metadata = %{
         params: [1, 2],
         query: "select $1, $2",
@@ -481,30 +481,93 @@ defmodule EctoQueryExplorer.HandlerTest do
       handle_event(%{total_time: 10}, metadata, 3)
 
       query_id = :erlang.phash2(metadata.query)
+      stacktrace_id = :erlang.phash2(metadata[:stacktrace])
 
       assert [
                {
-                 {:params, ^query_id},
+                 {:params, ^query_id, ^stacktrace_id},
                  [
                    {3, 10, _params1},
                    {2, 9, _params2},
                    {1, 8, _params3}
                  ]
                }
-             ] = :ets.lookup(:ecto_query_explorer_data, {:params, query_id})
+             ] = :ets.lookup(:ecto_query_explorer_data, {:params, query_id, stacktrace_id})
 
       handle_event(%{total_time: 11}, metadata, 4)
 
       assert [
                {
-                 {:params, ^query_id},
+                 {:params, ^query_id, ^stacktrace_id},
                  [
-                   {4, 11, _params1},
-                   {3, 10, _params2},
-                   {2, 9, _params3}
+                   {3, 10, _params1},
+                   {2, 9, _params2},
+                   {1, 8, _params3}
                  ]
                }
-             ] = :ets.lookup(:ecto_query_explorer_data, {:params, query_id})
+             ] = :ets.lookup(:ecto_query_explorer_data, {:params, query_id, stacktrace_id})
+    end
+
+    test "for 3 first samples per query and stacktrace pair" do
+      metadata1 = %{
+        params: [1, 2],
+        query: "select $1, $2",
+        repo: App.Repo,
+        source: nil,
+        stacktrace: [
+          {Module1, :fun1, 1, [file: ~c"lib/path/to/file1.ex", line: 10]},
+          {Module2, :fun2, 2, [file: ~c"lib/path/to/file2.ex", line: 20]},
+          {Module3, :fun3, 3, [file: ~c"lib/path/to/file3.ex", line: 30]}
+        ]
+      }
+
+      metadata2 = %{
+        params: [1, 2],
+        query: "select $1, $2",
+        repo: App.Repo,
+        source: nil,
+        stacktrace: [
+          {Module1, :fun1, 1, [file: ~c"lib/path/to/file1.ex", line: 10]},
+          {Module2, :fun2, 2, [file: ~c"lib/path/to/file2.ex", line: 20]},
+          {Module4, :fun4, 4, [file: ~c"lib/path/to/file4.ex", line: 40]}
+        ]
+      }
+
+      handle_event(%{total_time: 8}, metadata1, 1)
+      handle_event(%{total_time: 9}, metadata1, 2)
+      handle_event(%{total_time: 10}, metadata1, 3)
+      handle_event(%{total_time: 11}, metadata1, 4) # will be ignored
+
+      handle_event(%{total_time: 7}, metadata2, 5)
+      handle_event(%{total_time: 8}, metadata2, 6)
+      handle_event(%{total_time: 9}, metadata2, 7)
+      handle_event(%{total_time: 10}, metadata2, 8) # will be ignored
+
+      query_id = :erlang.phash2("select $1, $2")
+      stacktrace_id1 = :erlang.phash2(metadata1[:stacktrace])
+      stacktrace_id2 = :erlang.phash2(metadata2[:stacktrace])
+
+      assert [
+               {
+                 {:params, ^query_id, ^stacktrace_id1},
+                 [
+                   {3, 10, _params1},
+                   {2, 9, _params2},
+                   {1, 8, _params3}
+                 ]
+               }
+             ] = :ets.lookup(:ecto_query_explorer_data, {:params, query_id, stacktrace_id1})
+
+      assert [
+               {
+                 {:params, ^query_id, ^stacktrace_id2},
+                 [
+                   {7, 9, _params1},
+                   {6, 8, _params2},
+                   {5, 7, _params3}
+                 ]
+               }
+             ] = :ets.lookup(:ecto_query_explorer_data, {:params, query_id, stacktrace_id2})
     end
   end
 
@@ -513,7 +576,7 @@ defmodule EctoQueryExplorer.HandlerTest do
       "any-name",
       measurements,
       metadata,
-      [repo: Repo, ets_table_name: :ecto_query_explorer_data],
+      [repo: Repo, ets_table_name: :ecto_query_explorer_data, samples_to_keep: 3],
       %{sample_id: sample_id}
     )
   end

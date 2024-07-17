@@ -17,6 +17,7 @@ defmodule EctoQueryExplorer.Handler do
     query_time = measurements[:query_time]
     queue_time = measurements[:queue_time]
     ets_table_name = config[:ets_table_name]
+    samples_to_keep = config[:samples_to_keep]
 
     query_id = :erlang.phash2(text)
 
@@ -30,13 +31,17 @@ defmodule EctoQueryExplorer.Handler do
       :ets.update_counter(ets_table_name, {:stacktraces, stacktrace_id}, {2, 1})
     end
 
-    sample =
-      {{:samples, sample_id}, query_id, total_time, queue_time, query_time, decode_time,
-       stacktrace_id}
+    search = {{:samples, :_}, query_id, :_, :_, :_, :_, stacktrace_id}
 
-    :ets.insert_new(ets_table_name, sample)
+    if :ets.select_count(ets_table_name, [{search, [], [true]}]) < samples_to_keep do
+      sample =
+        {{:samples, sample_id}, query_id, total_time, queue_time, query_time, decode_time,
+         stacktrace_id}
 
-    store_query_params(ets_table_name, query_id, metadata[:params], sample_id, total_time)
+      store_query_params(ets_table_name, query_id, metadata[:params], stacktrace_id, sample_id, total_time)
+
+      :ets.insert_new(ets_table_name, sample)
+    end
 
     stacktrace
     |> List.wrap()
@@ -79,8 +84,8 @@ defmodule EctoQueryExplorer.Handler do
     :ok
   end
 
-  def store_query_params(ets_table_name, query_id, values, sample_id, total_time) do
-    key = {:params, query_id}
+  def store_query_params(ets_table_name, query_id, values, stacktrace_id, sample_id, total_time) do
+    key = {:params, query_id, stacktrace_id}
 
     case :ets.lookup(ets_table_name, key) do
       [] ->
@@ -89,10 +94,8 @@ defmodule EctoQueryExplorer.Handler do
           {key, [{sample_id, total_time, :erlang.term_to_binary(values)}]}
         )
 
-      [{^key, [{_sample_id, existing_total_time, _values} | _] = params}]
-      when total_time > existing_total_time ->
-        new_list =
-          [{sample_id, total_time, :erlang.term_to_binary(values)} | params] |> Enum.take(3)
+      [{^key, params}] ->
+        new_list = [{sample_id, total_time, :erlang.term_to_binary(values)} | params]
 
         :ets.update_element(ets_table_name, key, {2, new_list})
 

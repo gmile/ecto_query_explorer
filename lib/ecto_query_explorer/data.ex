@@ -110,7 +110,7 @@ defmodule EctoQueryExplorer.Data do
        ]}
 
     params_spec =
-      {{{:params, :"$1"}, :"$2"}, [], [:"$2"]}
+      {{{:params, :"$1", :"$2"}, :"$3"}, [], [:"$3"]}
 
     [
       {{:queries, :_}, :_, :_, :_, :_},
@@ -119,7 +119,7 @@ defmodule EctoQueryExplorer.Data do
       {{:locations, :_}, :_, :_, :_},
       {{:stacktrace_entries, :_}, :_, :_, :_, :_},
       {{:stacktraces, :_}, :_},
-      {{:params, :_}, :_}
+      {{:params, :_, :_}, :_}
     ]
     |> Enum.each(fn item ->
       name = elem(elem(item, 0), 0)

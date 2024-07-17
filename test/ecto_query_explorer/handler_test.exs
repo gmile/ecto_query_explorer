@@ -536,12 +536,14 @@ defmodule EctoQueryExplorer.HandlerTest do
       handle_event(%{total_time: 8}, metadata1, 1)
       handle_event(%{total_time: 9}, metadata1, 2)
       handle_event(%{total_time: 10}, metadata1, 3)
-      handle_event(%{total_time: 11}, metadata1, 4) # will be ignored
+      # will be ignored
+      handle_event(%{total_time: 11}, metadata1, 4)
 
       handle_event(%{total_time: 7}, metadata2, 5)
       handle_event(%{total_time: 8}, metadata2, 6)
       handle_event(%{total_time: 9}, metadata2, 7)
-      handle_event(%{total_time: 10}, metadata2, 8) # will be ignored
+      # will be ignored
+      handle_event(%{total_time: 10}, metadata2, 8)
 
       query_id = :erlang.phash2("select $1, $2")
       stacktrace_id1 = :erlang.phash2(metadata1[:stacktrace])

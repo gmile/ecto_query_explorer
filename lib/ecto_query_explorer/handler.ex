@@ -27,10 +27,6 @@ defmodule EctoQueryExplorer.Handler do
 
     stacktrace_id = :erlang.phash2(stacktrace)
 
-    unless :ets.insert_new(ets_table_name, {{:stacktraces, stacktrace_id}, 1}) do
-      :ets.update_counter(ets_table_name, {:stacktraces, stacktrace_id}, {2, 1})
-    end
-
     search = {{:samples, :_}, query_id, :_, :_, :_, :_, stacktrace_id}
 
     if :ets.select_count(ets_table_name, [{search, [], [true]}]) < samples_to_keep do
@@ -38,9 +34,23 @@ defmodule EctoQueryExplorer.Handler do
         {{:samples, sample_id}, query_id, total_time, queue_time, query_time, decode_time,
          stacktrace_id}
 
-      store_query_params(ets_table_name, query_id, metadata[:params], stacktrace_id, sample_id, total_time)
+      store_query_params(
+        ets_table_name,
+        query_id,
+        metadata[:params],
+        stacktrace_id,
+        sample_id,
+        total_time
+      )
 
       :ets.insert_new(ets_table_name, sample)
+    end
+
+    # TODO:
+    # if stacktrace is already known - do nothing
+
+    unless :ets.insert_new(ets_table_name, {{:stacktraces, stacktrace_id}, 1}) do
+      :ets.update_counter(ets_table_name, {:stacktraces, stacktrace_id}, {2, 1})
     end
 
     stacktrace

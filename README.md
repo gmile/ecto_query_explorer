@@ -85,6 +85,7 @@ Perform the following steps:
       otp_app: :my_app,
       repo: MyApp.EctoQueryExplorerRepo,
       ets_table_name: :ets_query_explorer_data,
+      samples_to_keep: 5,
       source_ecto_repos: [
         MyApp.MyRepo
       ]

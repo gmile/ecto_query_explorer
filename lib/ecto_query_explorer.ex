@@ -30,7 +30,7 @@ defmodule EctoQueryExplorer do
     config = [
       repo: state[:repo],
       ets_table_name: state[:ets_table_name],
-      samples_to_keep: 5
+      samples_to_keep: state[:samples_to_keep]
     ]
 
     case :telemetry.attach_many(__MODULE__, events, &EctoQueryExplorer.handle_event/4, config) do

@@ -8,7 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The format is loosely based on [Keep a Changelog][keepachangelog], and this
 project adheres to [Semantic Versioning][semver].
 
-## [Unreleased]
+## [v0.1.3]
+
+### Added
+
+- Add option to store N samples per query/stacktrace pair, defaults to 5 samples
+- Make less calls to :ets
+
+### Changed
+
+- No longer store all samples
+- Store all params for each stored sample
 
 ## [v0.1.2]
 

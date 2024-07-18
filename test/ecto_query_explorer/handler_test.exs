@@ -39,8 +39,8 @@ defmodule EctoQueryExplorer.HandlerTest do
 
     test "records a sample for each handle_event call, but updates counters", %{table: table} do
       assert [
-               {{:samples, 1}, _, 100, nil, nil, nil, stacktrace_id},
-               {{:samples, 2}, _, 200, nil, nil, nil, stacktrace_id}
+               {{:samples, 1}, _, 100, nil, nil, nil, stacktrace_id, params},
+               {{:samples, 2}, _, 200, nil, nil, nil, stacktrace_id, params}
              ] = rows(table, :samples)
     end
 
@@ -66,18 +66,6 @@ defmodule EctoQueryExplorer.HandlerTest do
                {{:locations, _id2}, "lib/path/to/file3.ex", 30},
                {{:locations, _id3}, "lib/path/to/file1.ex", 10}
              ] = rows(table, :locations)
-    end
-
-    test "records up to 3 params", %{table: table} do
-      assert [
-               {
-                 {:params, _query_id, _stacktrace_id},
-                 [
-                   {2, 200, <<131, 107, 0, 3, 1, 2, 3>>},
-                   {1, 100, <<131, 107, 0, 3, 1, 2, 3>>}
-                 ]
-               }
-             ] = rows(table, :params)
     end
   end
 
@@ -121,9 +109,9 @@ defmodule EctoQueryExplorer.HandlerTest do
 
     test "records a sample for each handle_event call, but updates counters", %{table: table} do
       assert [
-               {{:samples, 1}, query_id, 100, nil, nil, nil, _stacktrace_id1},
-               {{:samples, 2}, query_id, 200, nil, nil, nil, stacktrace_id2},
-               {{:samples, 3}, query_id, 300, nil, nil, nil, stacktrace_id2}
+               {{:samples, 1}, query_id, 100, nil, nil, nil, _stacktrace_id1, params},
+               {{:samples, 2}, query_id, 200, nil, nil, nil, stacktrace_id2, params},
+               {{:samples, 3}, query_id, 300, nil, nil, nil, stacktrace_id2, params}
              ] = rows(table, :samples)
     end
 
@@ -198,8 +186,8 @@ defmodule EctoQueryExplorer.HandlerTest do
 
     test "records a sample for each handle_event call, but updates counters", %{table: table} do
       assert [
-               {{:samples, 1}, _, 100, nil, nil, nil, _stacktrace_id1},
-               {{:samples, 2}, _, 200, nil, nil, nil, _stacktrace_id2}
+               {{:samples, 1}, _, 100, nil, nil, nil, _stacktrace_id1, _params1},
+               {{:samples, 2}, _, 200, nil, nil, nil, _stacktrace_id2, _params2}
              ] = rows(table, :samples)
     end
 
@@ -277,8 +265,8 @@ defmodule EctoQueryExplorer.HandlerTest do
 
     test "records a sample for each handle_event call, but updates counters", %{table: table} do
       assert [
-               {{:samples, 1}, _, 100, nil, nil, nil, _stacktrace_id1},
-               {{:samples, 2}, _, 200, nil, nil, nil, _stacktrace_id2}
+               {{:samples, 1}, _, 100, nil, nil, nil, _stacktrace_id1, params},
+               {{:samples, 2}, _, 200, nil, nil, nil, _stacktrace_id2, params}
              ] = rows(table, :samples)
     end
 
@@ -358,8 +346,8 @@ defmodule EctoQueryExplorer.HandlerTest do
 
     test "records a sample for each handle_event call, but updates counters", %{table: table} do
       assert [
-               {{:samples, 1}, _, 100, nil, nil, nil, _stacktrace_id1},
-               {{:samples, 2}, _, 200, nil, nil, nil, _stacktrace_id2}
+               {{:samples, 1}, _, 100, nil, nil, nil, _stacktrace_id1, _params1},
+               {{:samples, 2}, _, 200, nil, nil, nil, _stacktrace_id2, _params2}
              ] = rows(table, :samples)
     end
 
@@ -429,8 +417,8 @@ defmodule EctoQueryExplorer.HandlerTest do
 
     test "records a sample for each handle_event call, but updates counters", %{table: table} do
       assert [
-               {{:samples, 1}, _, 100, nil, nil, nil, _stacktrace_id1},
-               {{:samples, 2}, _, 200, nil, nil, nil, _stacktrace_id2}
+               {{:samples, 1}, _, 100, nil, nil, nil, _stacktrace_id1, _params1},
+               {{:samples, 2}, _, 200, nil, nil, nil, _stacktrace_id2, _params2}
              ] = rows(table, :samples)
     end
 
@@ -465,49 +453,6 @@ defmodule EctoQueryExplorer.HandlerTest do
   end
 
   describe "stores query params" do
-    test "for 3 first samples for same query and stacktrace" do
-      metadata = %{
-        params: [1, 2],
-        query: "select $1, $2",
-        repo: App.Repo,
-        source: nil,
-        stacktrace: [
-          {Module1, :fun1, 1, [file: ~c"lib/path/to/file1.ex", line: 10]}
-        ]
-      }
-
-      handle_event(%{total_time: 8}, metadata, 1)
-      handle_event(%{total_time: 9}, metadata, 2)
-      handle_event(%{total_time: 10}, metadata, 3)
-
-      query_id = :erlang.phash2(metadata.query)
-      stacktrace_id = :erlang.phash2(metadata[:stacktrace])
-
-      assert [
-               {
-                 {:params, ^query_id, ^stacktrace_id},
-                 [
-                   {3, 10, _params1},
-                   {2, 9, _params2},
-                   {1, 8, _params3}
-                 ]
-               }
-             ] = :ets.lookup(:ecto_query_explorer_data, {:params, query_id, stacktrace_id})
-
-      handle_event(%{total_time: 11}, metadata, 4)
-
-      assert [
-               {
-                 {:params, ^query_id, ^stacktrace_id},
-                 [
-                   {3, 10, _params1},
-                   {2, 9, _params2},
-                   {1, 8, _params3}
-                 ]
-               }
-             ] = :ets.lookup(:ecto_query_explorer_data, {:params, query_id, stacktrace_id})
-    end
-
     test "for 3 first samples per query and stacktrace pair" do
       metadata1 = %{
         params: [1, 2],
@@ -533,43 +478,47 @@ defmodule EctoQueryExplorer.HandlerTest do
         ]
       }
 
+      metadata3 = %{
+        params: [1, 2],
+        query: "select $1, $2, $3",
+        repo: App.Repo,
+        source: nil,
+        stacktrace: [
+          {Module1, :fun1, 1, [file: ~c"lib/path/to/file1.ex", line: 10]},
+          {Module2, :fun2, 2, [file: ~c"lib/path/to/file2.ex", line: 20]},
+          {Module4, :fun4, 4, [file: ~c"lib/path/to/file4.ex", line: 40]}
+        ]
+      }
+
       handle_event(%{total_time: 8}, metadata1, 1)
       handle_event(%{total_time: 9}, metadata1, 2)
       handle_event(%{total_time: 10}, metadata1, 3)
-      # will be ignored
       handle_event(%{total_time: 11}, metadata1, 4)
 
       handle_event(%{total_time: 7}, metadata2, 5)
       handle_event(%{total_time: 8}, metadata2, 6)
       handle_event(%{total_time: 9}, metadata2, 7)
-      # will be ignored
       handle_event(%{total_time: 10}, metadata2, 8)
 
-      query_id = :erlang.phash2("select $1, $2")
-      stacktrace_id1 = :erlang.phash2(metadata1[:stacktrace])
-      stacktrace_id2 = :erlang.phash2(metadata2[:stacktrace])
+      handle_event(%{total_time: 6}, metadata3, 9)
+      handle_event(%{total_time: 7}, metadata3, 10)
+      handle_event(%{total_time: 8}, metadata3, 11)
+      handle_event(%{total_time: 9}, metadata3, 12)
 
-      assert [
-               {
-                 {:params, ^query_id, ^stacktrace_id1},
-                 [
-                   {3, 10, _params1},
-                   {2, 9, _params2},
-                   {1, 8, _params3}
-                 ]
-               }
-             ] = :ets.lookup(:ecto_query_explorer_data, {:params, query_id, stacktrace_id1})
+      assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 1})
+      assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 2})
+      assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 3})
+      assert [] = :ets.lookup(:ecto_query_explorer_data, {:samples, 4})
 
-      assert [
-               {
-                 {:params, ^query_id, ^stacktrace_id2},
-                 [
-                   {7, 9, _params1},
-                   {6, 8, _params2},
-                   {5, 7, _params3}
-                 ]
-               }
-             ] = :ets.lookup(:ecto_query_explorer_data, {:params, query_id, stacktrace_id2})
+      assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 5})
+      assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 6})
+      assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 7})
+      assert [] = :ets.lookup(:ecto_query_explorer_data, {:samples, 8})
+
+      assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 9})
+      assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 10})
+      assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 11})
+      assert [] = :ets.lookup(:ecto_query_explorer_data, {:samples, 12})
     end
   end
 

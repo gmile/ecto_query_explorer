@@ -48,7 +48,7 @@ defmodule EctoQueryExplorer.DataTest do
       create_query()
 
       assert %{
-               total_records: 22,
+               total_records: 21,
                total_memory: _
              } = EctoQueryExplorer.Data.ets_stats()
     end
@@ -62,13 +62,12 @@ defmodule EctoQueryExplorer.DataTest do
                rows: [
                  ["functions", 0, 4096],
                  ["locations", 0, 4096],
-                 ["params", 0, 4096],
                  ["queries", 0, 4096],
                  ["samples", 0, 4096],
                  ["stacktrace_entries", 0, 4096],
                  ["stacktraces", 0, 4096]
                ],
-               num_rows: 7
+               num_rows: 6
              } == EctoQueryExplorer.Data.repo_stats()
 
       create_query()
@@ -80,13 +79,12 @@ defmodule EctoQueryExplorer.DataTest do
                rows: [
                  ["functions", 6, 4096],
                  ["locations", 6, 4096],
-                 ["params", 1, 4096],
                  ["queries", 1, 4096],
                  ["samples", 1, 4096],
                  ["stacktrace_entries", 6, 4096],
                  ["stacktraces", 1, 4096]
                ],
-               num_rows: 7
+               num_rows: 6
              } == EctoQueryExplorer.Data.repo_stats()
 
       EctoQueryExplorer.Data.repo_stats()
@@ -108,10 +106,10 @@ defmodule EctoQueryExplorer.DataTest do
         {{:locations, 82_329_887}, "gen_server.erl", 851},
         {{:locations, 87_052_619}, "gen_server.erl", 814},
         {{:locations, 110_342_722}, "lib/ecto/repo/supervisor.ex", 163},
-        {{:params, 129_284_157, 59_205_549}, [{123, 3_271_209, <<131, 107, 0, 1, 234>>}]},
         {{:queries, 129_284_157}, "select * from customers where id = $1", "App.Repo",
          "customers", 1},
-        {{:samples, 123}, 129_284_157, 3_271_209, 2_322_375, 944_584, 4250, 59_205_549},
+        {{:samples, 123}, 129_284_157, 3_271_209, 2_322_375, 944_584, 4250, 59_205_549,
+         <<131, 107, 0, 1, 234>>},
         {{:stacktrace_entries, 12_081_283}, 59_205_549, 79_772_134, 61_301_931, 5},
         {{:stacktrace_entries, 30_562_826}, 59_205_549, 68_908_858, 82_329_887, 3},
         {{:stacktrace_entries, 64_780_584}, 59_205_549, 13_607_698, 87_052_619, 4},
@@ -127,7 +125,6 @@ defmodule EctoQueryExplorer.DataTest do
         Repo.one(
           from(q in Query,
             join: s in assoc(q, :samples),
-            join: p in assoc(s, :params),
             join: st in assoc(s, :stacktrace),
             join: se in assoc(st, :stacktrace_entries),
             join: f in assoc(se, :function),
@@ -136,7 +133,6 @@ defmodule EctoQueryExplorer.DataTest do
               samples:
                 {s,
                  [
-                   params: p,
                    stacktrace: {st, [stacktrace_entries: {se, [function: f, location: l]}]}
                  ]}
             ],
@@ -155,11 +151,7 @@ defmodule EctoQueryExplorer.DataTest do
                    query_time: 944_584,
                    queue_time: 2_322_375,
                    total_time: 3_271_209,
-                   params: %{
-                     id: 123,
-                     values: ^encoded_params,
-                     sample_id: 123
-                   },
+                   params: ^encoded_params,
                    stacktrace: %{
                      id: 59_205_549,
                      counter: 1,
@@ -258,10 +250,10 @@ defmodule EctoQueryExplorer.DataTest do
       {{:locations, 82_329_887}, "gen_server.erl", 851},
       {{:locations, 87_052_619}, "gen_server.erl", 814},
       {{:locations, 110_342_722}, "lib/ecto/repo/supervisor.ex", 163},
-      {{:params, 129_284_157, 59_205_549}, [{123, 3_271_209, <<131, 107, 0, 1, 234>>}]},
       {{:queries, 129_284_157}, "select * from customers where id = $1",
        "Elixir.EctoQueryExplorer.QueriesTest.App.Repo", "customers", 1},
-      {{:samples, 123}, 129_284_157, 3_271_209, 2_322_375, 944_584, 4250, 59_205_549},
+      {{:samples, 123}, 129_284_157, 3_271_209, 2_322_375, 944_584, 4250, 59_205_549,
+       <<131, 107, 0, 1, 234>>},
       {{:stacktrace_entries, 12_081_283}, 59_205_549, 79_772_134, 61_301_931, 5},
       {{:stacktrace_entries, 30_562_826}, 59_205_549, 68_908_858, 82_329_887, 3},
       {{:stacktrace_entries, 64_780_584}, 59_205_549, 13_607_698, 87_052_619, 4},

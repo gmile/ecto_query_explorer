@@ -40,16 +40,7 @@ defmodule EctoQueryExplorer.Handler do
     if sample_counter <= samples_to_keep do
       sample =
         {{:samples, sample_id}, query_id, total_time, queue_time, query_time, decode_time,
-         stacktrace_id}
-
-      store_query_params(
-        ets_table_name,
-        query_id,
-        metadata[:params],
-        stacktrace_id,
-        sample_id,
-        total_time
-      )
+         stacktrace_id, :erlang.term_to_binary(metadata[:params])}
 
       :ets.insert_new(ets_table_name, sample)
     end
@@ -93,25 +84,5 @@ defmodule EctoQueryExplorer.Handler do
     end
 
     :ok
-  end
-
-  def store_query_params(ets_table_name, query_id, values, stacktrace_id, sample_id, total_time) do
-    key = {:params, query_id, stacktrace_id}
-
-    case :ets.lookup(ets_table_name, key) do
-      [] ->
-        :ets.insert_new(
-          ets_table_name,
-          {key, [{sample_id, total_time, :erlang.term_to_binary(values)}]}
-        )
-
-      [{^key, params}] ->
-        new_list = [{sample_id, total_time, :erlang.term_to_binary(values)} | params]
-
-        :ets.update_element(ets_table_name, key, {2, new_list})
-
-      _ ->
-        false
-    end
   end
 end

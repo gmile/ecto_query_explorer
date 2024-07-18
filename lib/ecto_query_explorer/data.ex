@@ -7,8 +7,7 @@ defmodule EctoQueryExplorer.Data do
     Stacktrace,
     StacktraceEntry,
     Function,
-    Location,
-    Params
+    Location
   }
 
   def ets_stats do
@@ -37,14 +36,12 @@ defmodule EctoQueryExplorer.Data do
       select 'stacktraces' name, count(1) total_records from stacktraces
       union
       select 'stacktrace_entries' name, count(1) total_records from stacktrace_entries
-      union
-      select 'params' name, count(1) total_records from params
     ),
     sizes as (
         select SUM(pgsize) bytes,
                name
           from dbstat
-         where name in ('queries', 'samples', 'functions', 'locations', 'stacktrace_entries', 'params', 'stacktraces')
+         where name in ('queries', 'samples', 'functions', 'locations', 'stacktrace_entries', 'stacktraces')
       group by name
     )
       select r.name,
@@ -67,7 +64,7 @@ defmodule EctoQueryExplorer.Data do
        [%{id: :"$1", text: :"$2", repo: :"$3", source: :"$4", counter: :"$5"}]}
 
     samples_spec =
-      {{{:samples, :"$1"}, :"$2", :"$3", :"$4", :"$5", :"$6", :"$7"}, [],
+      {{{:samples, :"$1"}, :"$2", :"$3", :"$4", :"$5", :"$6", :"$7", :"$8"}, [],
        [
          %{
            id: :"$1",
@@ -76,7 +73,8 @@ defmodule EctoQueryExplorer.Data do
            queue_time: :"$4",
            query_time: :"$5",
            decode_time: :"$6",
-           stacktrace_id: :"$7"
+           stacktrace_id: :"$7",
+           params: :"$8"
          }
        ]}
 
@@ -108,17 +106,13 @@ defmodule EctoQueryExplorer.Data do
          }
        ]}
 
-    params_spec =
-      {{{:params, :"$1", :"$2"}, :"$3"}, [], [:"$3"]}
-
     [
       {{:queries, :_}, :_, :_, :_, :_},
       {{:samples, :_}, :_, :_, :_, :_, :_, :_},
       {{:functions, :_}, :_, :_, :_},
       {{:locations, :_}, :_, :_},
       {{:stacktrace_entries, :_}, :_, :_, :_, :_},
-      {{:stacktraces, :_}, :_},
-      {{:params, :_, :_}, :_}
+      {{:stacktraces, :_}, :_}
     ]
     |> Enum.each(fn item ->
       name = elem(elem(item, 0), 0)
@@ -127,7 +121,6 @@ defmodule EctoQueryExplorer.Data do
       Logger.info("Preparing to dump #{count} #{name}")
     end)
 
-    repo.delete_all(Params)
     repo.delete_all(StacktraceEntry)
     repo.delete_all(Sample)
     repo.delete_all(Stacktrace)
@@ -141,21 +134,10 @@ defmodule EctoQueryExplorer.Data do
     insert_in_batches(repo, Stacktrace, stacktraces_spec, ets_table)
     insert_in_batches(repo, Sample, samples_spec, ets_table)
     insert_in_batches(repo, StacktraceEntry, stacktrace_entries_spec, ets_table)
-    insert_params(repo, Params, params_spec, ets_table)
 
     Logger.info(
       "Collected data is now available to query using #{repo} repo (#{repo.config()[:database]} database)"
     )
-  end
-
-  def insert_params(repo, schema, spec, ets_table) do
-    :ets.select(ets_table, [spec])
-    |> List.flatten()
-    |> Enum.chunk_every(1000)
-    |> Enum.each(fn chunk ->
-      data = Enum.map(chunk, fn {id, _, values} -> %{id: id, sample_id: id, values: values} end)
-      repo.insert_all(schema, data)
-    end)
   end
 
   def insert_in_batches(repo, schema, spec, ets_table) do

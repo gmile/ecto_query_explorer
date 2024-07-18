@@ -40,6 +40,7 @@ defmodule EctoQueryExplorer.Migration0 do
       add(:decode_time, :integer)
       add(:query_time, :integer)
       add(:queue_time, :integer)
+      add(:params, :binary)
 
       timestamps(
         type: :utc_datetime_usec,
@@ -49,21 +50,10 @@ defmodule EctoQueryExplorer.Migration0 do
       )
     end
 
-    create_if_not_exists table("params") do
-      add(:sample_id, references("samples"), null: false)
-      add(:values, :binary, null: false)
-
-      timestamps(
-        inserted_at: false,
-        updated_at: false
-      )
-    end
-
     create_if_not_exists(index("queries", [:repo, :text], unique: true))
     create_if_not_exists(index("samples", [:query_id, :stacktrace_id]))
     create_if_not_exists(index("functions", [:module, :function, :arity], unique: true))
     create_if_not_exists(index("locations", [:file, :line], unique: true))
-    create_if_not_exists(index("params", [:sample_id], unique: true))
 
     create_if_not_exists(
       index("stacktrace_entries", [:stacktrace_id, :function_id, :location_id, :index],
@@ -78,6 +68,5 @@ defmodule EctoQueryExplorer.Migration0 do
     drop_if_exists(table("functions"))
     drop_if_exists(table("locations"))
     drop_if_exists(table("stacktrace_entries"))
-    drop_if_exists(table("params"))
   end
 end

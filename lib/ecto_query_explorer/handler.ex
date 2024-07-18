@@ -49,6 +49,11 @@ defmodule EctoQueryExplorer.Handler do
          [{{:"$1", :"$2"}}]}
       ]
 
+      # this can be avoided if we keep a separate "cache" of fastest
+      # {sample_id, total_time}
+      #
+      # we can keep the cached value up-to-date during insertion
+      #
       {[{fastest_sample_id, fastest_total_time}], _continuation_data} =
         :ets.select(ets_table_name, match_spec, 1)
 

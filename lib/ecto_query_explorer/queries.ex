@@ -30,7 +30,6 @@ defmodule EctoQueryExplorer.Queries do
     )
   end
 
-  # TODO: require query_id to make the search bearable
   def filter_by_parameter(value) do
     repo = Application.get_env(:ecto_query_explorer, :repo)
 

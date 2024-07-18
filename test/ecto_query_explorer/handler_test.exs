@@ -531,33 +531,4 @@ defmodule EctoQueryExplorer.HandlerTest do
       %{sample_id: sample_id}
     )
   end
-
-  # test these scenarios for stacktraces:
-
-  #   |  
-  #   |  
-  #  / \
-  # |   |
-  #
-  #
-  # \   /
-  #  \ /
-  #   |  
-  #   |  
-
-  # \   /
-  #  \ /
-  #   |  
-  #   |  
-  #  / \
-  # |   |
-
-  #   |  
-  #   |  
-  #  / \
-  # |   |
-  # \   /
-  #  \ /
-  #   |  
-  #   |  
 end

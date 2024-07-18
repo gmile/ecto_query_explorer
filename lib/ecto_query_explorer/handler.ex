@@ -30,14 +30,14 @@ defmodule EctoQueryExplorer.Handler do
     # counting samples per query/stacktrace
     counter_key = {:samples_count, query_id, stacktrace_id}
 
-    current_counter =
+    sample_counter =
       if :ets.insert_new(ets_table_name, {counter_key, 1}) do
         1
       else
         :ets.update_counter(ets_table_name, counter_key, {2, 1})
       end
 
-    if current_counter <= samples_to_keep do
+    if sample_counter <= samples_to_keep do
       sample =
         {{:samples, sample_id}, query_id, total_time, queue_time, query_time, decode_time,
          stacktrace_id}

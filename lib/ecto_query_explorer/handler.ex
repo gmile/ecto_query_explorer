@@ -27,9 +27,17 @@ defmodule EctoQueryExplorer.Handler do
 
     stacktrace_id = :erlang.phash2(stacktrace)
 
-    search = {{:samples, :_}, query_id, :_, :_, :_, :_, stacktrace_id}
+    # counting samples per query/stacktrace
+    counter_key = {:samples_count, query_id, stacktrace_id}
 
-    if :ets.select_count(ets_table_name, [{search, [], [true]}]) < samples_to_keep do
+    current_counter =
+      if :ets.insert_new(ets_table_name, {counter_key, 1}) do
+        1
+      else
+        :ets.update_counter(ets_table_name, counter_key, {2, 1})
+      end
+
+    if current_counter <= samples_to_keep do
       sample =
         {{:samples, sample_id}, query_id, total_time, queue_time, query_time, decode_time,
          stacktrace_id}

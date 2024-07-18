@@ -37,12 +37,25 @@ defmodule EctoQueryExplorer.Handler do
         :ets.update_counter(ets_table_name, counter_key, {2, 1})
       end
 
-    if sample_counter <= samples_to_keep do
-      sample =
-        {{:samples, sample_id}, query_id, total_time, queue_time, query_time, decode_time,
-         stacktrace_id, :erlang.term_to_binary(metadata[:params])}
+    sample =
+      {{:samples, sample_id}, query_id, total_time, queue_time, query_time, decode_time,
+       stacktrace_id, :erlang.term_to_binary(metadata[:params])}
 
+    if sample_counter <= samples_to_keep do
       :ets.insert_new(ets_table_name, sample)
+    else
+      match_spec = [
+        {{{:samples, :"$1"}, query_id, :"$2", :_, :_, :_, stacktrace_id, :_}, [],
+         [{{:"$1", :"$2"}}]}
+      ]
+
+      {[{fastest_sample_id, fastest_total_time}], _continuation_data} =
+        :ets.select(ets_table_name, match_spec, 1)
+
+      if fastest_total_time < total_time do
+        :ets.insert(ets_table_name, sample)
+        :ets.delete(ets_table_name, {:samples, fastest_sample_id})
+      end
     end
 
     if :ets.insert_new(ets_table_name, {{:stacktraces, stacktrace_id}, 1}) do

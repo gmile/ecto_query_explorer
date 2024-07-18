@@ -505,20 +505,20 @@ defmodule EctoQueryExplorer.HandlerTest do
       handle_event(%{total_time: 8}, metadata3, 11)
       handle_event(%{total_time: 9}, metadata3, 12)
 
-      assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 1})
+      assert [] = :ets.lookup(:ecto_query_explorer_data, {:samples, 1})
       assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 2})
       assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 3})
-      assert [] = :ets.lookup(:ecto_query_explorer_data, {:samples, 4})
+      assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 4})
 
-      assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 5})
+      assert [] = :ets.lookup(:ecto_query_explorer_data, {:samples, 5})
       assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 6})
       assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 7})
-      assert [] = :ets.lookup(:ecto_query_explorer_data, {:samples, 8})
+      assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 8})
 
-      assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 9})
+      assert [] = :ets.lookup(:ecto_query_explorer_data, {:samples, 9})
       assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 10})
       assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 11})
-      assert [] = :ets.lookup(:ecto_query_explorer_data, {:samples, 12})
+      assert [_] = :ets.lookup(:ecto_query_explorer_data, {:samples, 12})
     end
   end
 

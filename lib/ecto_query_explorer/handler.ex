@@ -46,46 +46,43 @@ defmodule EctoQueryExplorer.Handler do
       :ets.insert_new(ets_table_name, sample)
     end
 
-    # TODO:
-    # if stacktrace is already known - do nothing
+    if :ets.insert_new(ets_table_name, {{:stacktraces, stacktrace_id}, 1}) do
+      stacktrace
+      |> List.wrap()
+      |> Enum.with_index()
+      |> Enum.each(fn {item, index} ->
+        {module, function, arity, location} = item
 
-    unless :ets.insert_new(ets_table_name, {{:stacktraces, stacktrace_id}, 1}) do
+        location_id =
+          case location do
+            [] ->
+              nil
+
+            [file: file, line: line] = value ->
+              id = :erlang.phash2(value)
+
+              :ets.insert_new(ets_table_name, {{:locations, id}, to_string(file), line})
+
+              id
+          end
+
+        function_id = :erlang.phash2({module, function, arity})
+
+        function = {{:functions, function_id}, to_string(module), to_string(function), arity}
+
+        :ets.insert_new(ets_table_name, function)
+
+        stacktrace_entry_id = :erlang.phash2({stacktrace_id, function_id, location_id, index})
+
+        stacktrace_entry =
+          {{:stacktrace_entries, stacktrace_entry_id}, stacktrace_id, function_id, location_id,
+           index}
+
+        :ets.insert_new(ets_table_name, stacktrace_entry)
+      end)
+    else
       :ets.update_counter(ets_table_name, {:stacktraces, stacktrace_id}, {2, 1})
     end
-
-    stacktrace
-    |> List.wrap()
-    |> Enum.with_index()
-    |> Enum.each(fn {item, index} ->
-      {module, function, arity, location} = item
-
-      location_id =
-        case location do
-          [] ->
-            nil
-
-          [file: file, line: line] = value ->
-            id = :erlang.phash2(value)
-
-            :ets.insert_new(ets_table_name, {{:locations, id}, to_string(file), line})
-
-            id
-        end
-
-      function_id = :erlang.phash2({module, function, arity})
-
-      function = {{:functions, function_id}, to_string(module), to_string(function), arity}
-
-      :ets.insert_new(ets_table_name, function)
-
-      stacktrace_entry_id = :erlang.phash2({stacktrace_id, function_id, location_id, index})
-
-      stacktrace_entry =
-        {{:stacktrace_entries, stacktrace_entry_id}, stacktrace_id, function_id, location_id,
-         index}
-
-      :ets.insert_new(ets_table_name, stacktrace_entry)
-    end)
 
     :ok
   end

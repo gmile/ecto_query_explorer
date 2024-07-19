@@ -8,20 +8,15 @@ defmodule EctoQueryExplorer.Handler do
   def handle_event(_event, measurements, metadata, config, %{sample_id: sample_id}) do
     text = metadata[:query]
     source = metadata[:source]
-    repo = metadata[:repo] && to_string(metadata[:repo])
+    repo = metadata[:repo]
     stacktrace = metadata[:stacktrace]
-    # idea for future optimisation: do not access all these values ahead of time
-    # as in most cases total_time will be needed
     total_time = measurements[:total_time]
-    decode_time = measurements[:decode_time]
-    query_time = measurements[:query_time]
-    queue_time = measurements[:queue_time]
     ets_table_name = config[:ets_table_name]
     samples_to_keep = config[:samples_to_keep]
 
     query_id = :erlang.phash2(text)
 
-    unless :ets.insert_new(ets_table_name, {{:queries, query_id}, text, repo, source, 1}) do
+    unless :ets.insert_new(ets_table_name, {{:queries, query_id}, text, to_string(repo), source, 1}) do
       :ets.update_counter(ets_table_name, {:queries, query_id}, {5, 1})
     end
 
@@ -36,10 +31,6 @@ defmodule EctoQueryExplorer.Handler do
       else
         :ets.update_counter(ets_table_name, counter_key, {2, 1})
       end
-
-    sample =
-      {{:samples, sample_id}, query_id, total_time, queue_time, query_time, decode_time,
-       stacktrace_id, :erlang.term_to_binary(metadata[:params])}
 
     sample_cache_key = {:fastest_sample, query_id, stacktrace_id}
 
@@ -59,6 +50,11 @@ defmodule EctoQueryExplorer.Handler do
         }
       ]
 
+      sample =
+        {{:samples, sample_id}, query_id, total_time, measurements[:queue_time],
+         measurements[:query_time], measurements[:decode_time], stacktrace_id,
+         :erlang.term_to_binary(metadata[:params])}
+
       :ets.select_replace(ets_table_name, match_spec)
       :ets.insert_new(ets_table_name, sample)
     else
@@ -71,6 +67,12 @@ defmodule EctoQueryExplorer.Handler do
 
         # replace fastest sample with new sample
         :ets.delete(ets_table_name, {:samples, fastest_sample_id})
+
+        sample =
+          {{:samples, sample_id}, query_id, total_time, measurements[:queue_time],
+           measurements[:query_time], measurements[:decode_time], stacktrace_id,
+           :erlang.term_to_binary(metadata[:params])}
+
         :ets.insert_new(ets_table_name, sample)
       end
     end

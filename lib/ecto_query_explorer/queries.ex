@@ -25,9 +25,7 @@ defmodule EctoQueryExplorer.Queries do
   end
 
   def filter_by_query(string) do
-    Application.get_env(:ecto_query_explorer, :repo).all(
-      from [query: q] in base_query(), where: like(q.text, ^string)
-    )
+    Application.get_env(:ecto_query_explorer, :repo).all(from [query: q] in base_query(), where: like(q.text, ^string))
   end
 
   def filter_by_parameter(value) do

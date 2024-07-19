@@ -79,8 +79,7 @@ defmodule EctoQueryExplorer.Data do
        ]}
 
     functions_spec =
-      {{{:functions, :"$1"}, :"$2", :"$3", :"$4"}, [],
-       [%{id: :"$1", module: :"$2", function: :"$3", arity: :"$4"}]}
+      {{{:functions, :"$1"}, :"$2", :"$3", :"$4"}, [], [%{id: :"$1", module: :"$2", function: :"$3", arity: :"$4"}]}
 
     locations_spec =
       {{{:locations, :"$1"}, :"$2", :"$3"}, [], [%{id: :"$1", file: :"$2", line: :"$3"}]}
@@ -135,9 +134,7 @@ defmodule EctoQueryExplorer.Data do
     insert_in_batches(repo, Sample, samples_spec, ets_table)
     insert_in_batches(repo, StacktraceEntry, stacktrace_entries_spec, ets_table)
 
-    Logger.info(
-      "Collected data is now available to query using #{repo} repo (#{repo.config()[:database]} database)"
-    )
+    Logger.info("Collected data is now available to query using #{repo} repo (#{repo.config()[:database]} database)")
   end
 
   def insert_in_batches(repo, schema, spec, ets_table) do

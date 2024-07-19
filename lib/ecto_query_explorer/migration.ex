@@ -56,9 +56,7 @@ defmodule EctoQueryExplorer.Migration0 do
     create_if_not_exists(index("locations", [:file, :line], unique: true))
 
     create_if_not_exists(
-      index("stacktrace_entries", [:stacktrace_id, :function_id, :location_id, :index],
-        unique: true
-      )
+      index("stacktrace_entries", [:stacktrace_id, :function_id, :location_id, :index], unique: true)
     )
   end
 

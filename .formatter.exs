@@ -2,5 +2,6 @@
 [
   inputs: ["{mix,.formatter}.exs", "{config,lib,test}/**/*.{ex,exs}"],
   subdirectories: ["priv/repo/migrations"],
-  import_deps: [:ecto]
+  import_deps: [:ecto],
+  line_length: 120
 ]

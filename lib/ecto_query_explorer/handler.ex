@@ -51,9 +51,8 @@ defmodule EctoQueryExplorer.Handler do
       ]
 
       sample =
-        {{:samples, sample_id}, query_id, total_time, measurements[:queue_time],
-         measurements[:query_time], measurements[:decode_time], stacktrace_id,
-         :erlang.term_to_binary(metadata[:params])}
+        {{:samples, sample_id}, query_id, total_time, measurements[:queue_time], measurements[:query_time],
+         measurements[:decode_time], stacktrace_id, :erlang.term_to_binary(metadata[:params])}
 
       :ets.select_replace(ets_table_name, match_spec)
       :ets.insert_new(ets_table_name, sample)
@@ -69,9 +68,8 @@ defmodule EctoQueryExplorer.Handler do
         :ets.delete(ets_table_name, {:samples, fastest_sample_id})
 
         sample =
-          {{:samples, sample_id}, query_id, total_time, measurements[:queue_time],
-           measurements[:query_time], measurements[:decode_time], stacktrace_id,
-           :erlang.term_to_binary(metadata[:params])}
+          {{:samples, sample_id}, query_id, total_time, measurements[:queue_time], measurements[:query_time],
+           measurements[:decode_time], stacktrace_id, :erlang.term_to_binary(metadata[:params])}
 
         :ets.insert_new(ets_table_name, sample)
       end
@@ -106,8 +104,7 @@ defmodule EctoQueryExplorer.Handler do
 
           stacktrace_entry_id = :erlang.phash2({stacktrace_id, function_id, location_id, index})
 
-          {{:stacktrace_entries, stacktrace_entry_id}, stacktrace_id, function_id, location_id,
-           index}
+          {{:stacktrace_entries, stacktrace_entry_id}, stacktrace_id, function_id, location_id, index}
         end)
 
       :ets.insert_new(ets_table_name, stacktrace_entries)

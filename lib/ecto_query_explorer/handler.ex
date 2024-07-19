@@ -97,6 +97,8 @@ defmodule EctoQueryExplorer.Handler do
 
         :ets.insert_new(ets_table_name, stacktrace_entry)
       end)
+
+      # insert all at once
     else
       :ets.update_counter(ets_table_name, {:stacktraces, stacktrace_id}, {2, 1})
     end

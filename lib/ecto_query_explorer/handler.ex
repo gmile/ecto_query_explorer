@@ -10,6 +10,8 @@ defmodule EctoQueryExplorer.Handler do
     source = metadata[:source]
     repo = metadata[:repo] && to_string(metadata[:repo])
     stacktrace = metadata[:stacktrace]
+    # idea for future optimisation: do not access all these values ahead of time
+    # as in most cases total_time will be needed
     total_time = measurements[:total_time]
     decode_time = measurements[:decode_time]
     query_time = measurements[:query_time]

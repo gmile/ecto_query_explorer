@@ -127,30 +127,22 @@ defmodule EctoQueryExplorer.Data do
     repo.delete_all(Location)
     repo.delete_all(Query)
 
-    insert_in_batches(repo, Query, queries_spec, ets_table)
-    insert_in_batches(repo, Location, locations_spec, ets_table)
-    insert_in_batches(repo, Function, functions_spec, ets_table)
-    insert_in_batches(repo, Stacktrace, stacktraces_spec, ets_table)
-    insert_in_batches(repo, Sample, samples_spec, ets_table)
-    insert_in_batches(repo, StacktraceEntry, stacktrace_entries_spec, ets_table)
+    sqlite_params_limit = 32766
+
+    insert_in_batches(repo, Query, queries_spec, ets_table, div(sqlite_params_limit, 5))
+    insert_in_batches(repo, Location, locations_spec, ets_table, div(sqlite_params_limit, 3))
+    insert_in_batches(repo, Function, functions_spec, ets_table, div(sqlite_params_limit, 4))
+    insert_in_batches(repo, Stacktrace, stacktraces_spec, ets_table, div(sqlite_params_limit, 2))
+    insert_in_batches(repo, Sample, samples_spec, ets_table, div(sqlite_params_limit, 8))
+    insert_in_batches(repo, StacktraceEntry, stacktrace_entries_spec, ets_table, div(sqlite_params_limit, 5))
 
     Logger.info("Collected data is now available to query using #{repo} repo (#{repo.config()[:database]} database)")
   end
 
-  # Note: max number of parameters is 32766,
-  # so adjust "1000" batch size for individual tables for more optimal insertion:
-  #
-  #   queries - 5 params per item
-  #   location - 3 params per item
-  #   functions - 4 params per item
-  #   samples - 8 params per item
-  #   stacktrace - 2 params per item
-  #   stacktrace_entry - 5 params per item
-  #
-  def insert_in_batches(repo, schema, spec, ets_table) do
+  def insert_in_batches(repo, schema, spec, ets_table, batch_size) do
     result =
       if is_atom(ets_table) do
-        :ets.select(ets_table, [spec], 1000)
+        :ets.select(ets_table, [spec], batch_size)
       else
         :ets.select(ets_table)
       end
@@ -166,7 +158,7 @@ defmodule EctoQueryExplorer.Data do
       {items, cont} ->
         Logger.info("Inserted #{length(items)} records into #{inspect(schema)}")
         repo.insert_all(schema, items)
-        insert_in_batches(repo, schema, spec, cont)
+        insert_in_batches(repo, schema, spec, cont, batch_size)
     end
   end
 end

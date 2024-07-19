@@ -255,6 +255,14 @@ Here are some examples:
     select id, text from queries where text like '%$25%' order by counter desc limit 5
     ```
 
+## Development
+
+Profiling handle_event function:
+
+```sh
+mix profile.cprof profiling-handle-event.exs --callers --details
+```
+
 ## License
 
 EctoQueryExplorer is licensed under MIT license. See [LICENSE](LICENSE) for more details.

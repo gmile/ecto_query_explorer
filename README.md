@@ -257,11 +257,15 @@ Here are some examples:
 
 ## Development
 
-Profiling handle_event function:
+* Profiling handle_event function:
 
-```sh
-mix profile.cprof profiling-handle-event.exs --callers --details
-```
+    ```sh
+    mix profile.cprof profiling-handle-event.exs --callers --details
+    ```
+
+* Generating a flamegraph:
+
+    Run `mix run flamegraph-handle-event.exs`, then use https://www.speedscope.app to view the resulting file
 
 ## License
 

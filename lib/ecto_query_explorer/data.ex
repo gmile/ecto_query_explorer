@@ -137,6 +137,16 @@ defmodule EctoQueryExplorer.Data do
     Logger.info("Collected data is now available to query using #{repo} repo (#{repo.config()[:database]} database)")
   end
 
+  # Note: max number of parameters is 32766,
+  # so adjust "1000" batch size for individual tables for more optimal insertion:
+  #
+  #   queries - 5 params per item
+  #   location - 3 params per item
+  #   functions - 4 params per item
+  #   samples - 8 params per item
+  #   stacktrace - 2 params per item
+  #   stacktrace_entry - 5 params per item
+  #
   def insert_in_batches(repo, schema, spec, ets_table) do
     result =
       if is_atom(ets_table) do

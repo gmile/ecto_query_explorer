@@ -5,8 +5,6 @@ defmodule EctoQueryExplorer.Handler do
     :ok
   end
 
-  # TODO: bring back counters
-  #
   def handle_event(_event, measurements, metadata, config, %{sample_id: sample_id}) do
     text = metadata[:query]
     source = metadata[:source]

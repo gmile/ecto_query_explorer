@@ -76,41 +76,39 @@ defmodule EctoQueryExplorer.Handler do
     end
 
     if :ets.insert_new(ets_table_name, {{:stacktraces, stacktrace_id}, 1}) do
-      stacktrace
-      |> List.wrap()
-      |> Enum.with_index()
-      |> Enum.each(fn {item, index} ->
-        {module, function, arity, location} = item
+      stacktrace_entries =
+        stacktrace
+        |> List.wrap()
+        |> Enum.with_index()
+        |> Enum.map(fn {item, index} ->
+          {module, function, arity, location} = item
 
-        location_id =
-          case location do
-            [] ->
-              nil
+          location_id =
+            case location do
+              [] ->
+                nil
 
-            [file: file, line: line] = value ->
-              id = :erlang.phash2(value)
+              [file: file, line: line] = value ->
+                id = :erlang.phash2(value)
 
-              :ets.insert_new(ets_table_name, {{:locations, id}, to_string(file), line})
+                :ets.insert_new(ets_table_name, {{:locations, id}, to_string(file), line})
 
-              id
-          end
+                id
+            end
 
-        function_id = :erlang.phash2({module, function, arity})
+          function_id = :erlang.phash2({module, function, arity})
 
-        function = {{:functions, function_id}, to_string(module), to_string(function), arity}
+          function = {{:functions, function_id}, to_string(module), to_string(function), arity}
 
-        :ets.insert_new(ets_table_name, function)
+          :ets.insert_new(ets_table_name, function)
 
-        stacktrace_entry_id = :erlang.phash2({stacktrace_id, function_id, location_id, index})
+          stacktrace_entry_id = :erlang.phash2({stacktrace_id, function_id, location_id, index})
 
-        stacktrace_entry =
           {{:stacktrace_entries, stacktrace_entry_id}, stacktrace_id, function_id, location_id,
            index}
+        end)
 
-        :ets.insert_new(ets_table_name, stacktrace_entry)
-      end)
-
-      # insert all at once
+      :ets.insert_new(ets_table_name, stacktrace_entries)
     else
       :ets.update_counter(ets_table_name, {:stacktraces, stacktrace_id}, {2, 1})
     end

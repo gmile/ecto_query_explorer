@@ -26,7 +26,7 @@ telemetry. Stacktraces were added to telemetry in https://github.com/elixir-ecto
 EctoQueryExplorer uses an ETS table to collect samples, queries, params, code locations and MFAs.
 Then EctoQueryExplorer saves collected data to SQLite3 to run analysis on top of.
 
-SQLite3 schema looks like this:
+SQLite3 schema looks like this: ![SQLite3 database schema](ecto-query-explorer.png)
 
 ### Caveats
 

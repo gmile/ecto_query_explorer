@@ -28,8 +28,6 @@ Then EctoQueryExplorer saves collected data to SQLite3 to run analysis on top of
 
 SQLite3 schema looks like this:
 
-[![SQLite3 database schema](ecto-query-explorer.png)](https://hex.pm/packages/ecto)
-
 ### Caveats
 
 * EctoQueryExplorer will not attempt to persist data across application restarts,

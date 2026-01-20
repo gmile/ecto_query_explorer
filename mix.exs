@@ -2,40 +2,47 @@ defmodule EctoQueryExplorer.MixProject do
   use Mix.Project
 
   @version File.read!("VERSION") |> String.trim()
+  @source_url "https://github.com/gmile/ecto_query_explorer"
 
   def project do
     [
       app: :ecto_query_explorer,
       version: @version,
       elixir: "~> 1.17",
-      package: package(),
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      package: package(),
+      docs: docs(),
+      name: "EctoQueryExplorer",
+      description: "Collect and analyze Ecto query telemetry",
+      source_url: @source_url
     ]
   end
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:elixir_make, "~> 0.8"},
-      {:telemetry, "~> 1.0"},
-      {:ecto_sqlite3, "~> 0.16"},
-      {:eflambe, "~> 0.3", only: ~w(dev)a},
-      {:postgrex, "~> 0.15", only: ~w(dev test)a},
-      {:jason, "~> 1.0", only: ~w(dev test)a}
+      {:telemetry, "~> 1.3"},
+      {:ecto_sqlite3, "~> 0.22"},
+      {:ex_doc, "~> 0.39", only: :dev, runtime: false},
+      {:eflambe, "~> 0.3", only: :dev},
+      {:postgrex, "~> 0.22", only: [:dev, :test]},
+      {:jason, "~> 1.4", only: [:dev, :test]}
     ]
   end
 
-  def package do
+  defp docs do
     [
-      name: :ecto_query_explorer,
-      description: "A tool used to gather and analyse Ecto query telemetry",
+      main: "readme",
+      extras: ["README.md", "CHANGELOG.md", "LICENSE"]
+    ]
+  end
+
+  defp package do
+    [
       maintainers: ["Ievgen Pyrogov"],
       licenses: ["MIT"],
-      files: ["lib/*", "mix.exs", "VERSION", "README.md", "LICENSE", "CHANGELOG.md"],
-      links: %{
-        "GitHub" => "https://github.com/gmile/ecto_query_explorer"
-      }
+      links: %{"GitHub" => @source_url},
+      files: ~w(lib .formatter.exs mix.exs VERSION README.md LICENSE CHANGELOG.md)
     ]
   end
 end

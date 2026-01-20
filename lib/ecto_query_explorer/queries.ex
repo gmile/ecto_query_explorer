@@ -1,4 +1,38 @@
 defmodule EctoQueryExplorer.Queries do
+  @moduledoc """
+  Query functions for analyzing collected Ecto telemetry data.
+
+  All functions query the SQLite database populated by `EctoQueryExplorer.Data.dump2sqlite/1`.
+
+  ## Examples
+
+      # Find queries matching a pattern (uses SQLite LIKE)
+      EctoQueryExplorer.Queries.filter_by_query("SELECT%users%")
+
+      # Find queries that used a specific parameter value
+      EctoQueryExplorer.Queries.filter_by_parameter("user-uuid-here")
+
+      # Find queries originating from a specific function
+      EctoQueryExplorer.Queries.filter_by_mfa(MyApp.Accounts, :get_user, 1)
+
+      # Find queries originating from a specific file/line
+      EctoQueryExplorer.Queries.filter_by_location("lib/my_app/accounts.ex", 42)
+
+      # Get the most frequently executed queries
+      EctoQueryExplorer.Queries.top_queries(10)
+
+      # Get EXPLAIN ANALYZE output for a specific sample
+      EctoQueryExplorer.Queries.explain(sample_id)
+
+  ## Direct SQLite access
+
+  You can also query the database directly:
+
+      sqlite3 /tmp/ecto-query-explorer.sqlite3 \\
+        "SELECT id, counter, substr(text, 1, 80) FROM queries ORDER BY counter DESC LIMIT 10"
+
+  """
+
   import Ecto.Query
 
   alias EctoQueryExplorer.{Query, Sample}

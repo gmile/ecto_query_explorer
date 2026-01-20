@@ -1,4 +1,30 @@
 defmodule EctoQueryExplorer.Data do
+  @moduledoc """
+  Functions for managing collected telemetry data.
+
+  Data flows: ETS (runtime) → SQLite (persistent storage)
+
+  ## Usage
+
+      # Check what's in ETS before dumping
+      EctoQueryExplorer.Data.ets_stats()
+
+      # Dump ETS data to SQLite
+      EctoQueryExplorer.Data.dump2sqlite()
+
+      # Check SQLite table sizes
+      EctoQueryExplorer.Data.repo_stats()
+
+  ## Epochs
+
+  Each dump creates an "epoch" record to track data provenance. This is useful
+  when merging data from multiple pods or deployments - you can see which epoch
+  each sample came from.
+
+      EctoQueryExplorer.Data.dump2sqlite(epoch_name: "api-pod-abc123")
+
+  """
+
   require Logger
 
   alias EctoQueryExplorer.{

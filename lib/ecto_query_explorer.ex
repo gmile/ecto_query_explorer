@@ -1,4 +1,42 @@
 defmodule EctoQueryExplorer do
+  @moduledoc """
+  Collects and analyzes Ecto query telemetry data.
+
+  EctoQueryExplorer hooks into Ecto's telemetry events to capture query execution data,
+  including stacktraces that show where each query originated. Data is stored in ETS
+  during runtime and can be dumped to SQLite for analysis.
+
+  ## How it works
+
+  1. Attaches to `[:my_app, :repo, :query]` telemetry events
+  2. Captures query text, timing, parameters, and stacktraces in ETS
+  3. On demand, dumps ETS data to SQLite via `EctoQueryExplorer.Data.dump2sqlite/1`
+  4. Query the SQLite database using `EctoQueryExplorer.Queries` functions
+
+  ## Configuration
+
+      config :ecto_query_explorer,
+        otp_app: :my_app,
+        repo: MyApp.EctoQueryExplorerRepo,
+        ets_table_name: :ecto_query_explorer_data,
+        samples_to_keep: 5,
+        source_ecto_repos: [MyApp.Repo]
+
+  ## Database schema
+
+  The SQLite database contains these tables:
+
+  - `queries` - unique query texts with execution counts
+  - `samples` - individual query executions with timing data
+  - `stacktraces` - unique call stacks
+  - `stacktrace_entries` - individual stack frames
+  - `functions` - unique module/function/arity combinations
+  - `locations` - unique file/line combinations
+  - `epochs` - data provenance tracking for multi-pod environments
+
+  See the schema diagram in the repository for relationships.
+  """
+
   use GenServer
 
   # Client

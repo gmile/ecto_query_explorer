@@ -17,17 +17,12 @@ defmodule EctoQueryExplorer.Migration1 do
     end
 
     # Add epoch_id to tables where it matters for provenance
-    alter table("locations") do
-      add_if_not_exists(:epoch_id, references("epochs"))
-    end
-
-    alter table("stacktraces") do
-      add_if_not_exists(:epoch_id, references("epochs"))
-    end
-
-    alter table("samples") do
-      add_if_not_exists(:epoch_id, references("epochs"))
-    end
+    # Note: SQLite doesn't support ALTER TABLE ADD COLUMN with REFERENCES,
+    # so we add the column without the constraint. The relationship is
+    # enforced at the application level via Ecto schemas.
+    execute("ALTER TABLE locations ADD COLUMN epoch_id INTEGER")
+    execute("ALTER TABLE stacktraces ADD COLUMN epoch_id INTEGER")
+    execute("ALTER TABLE samples ADD COLUMN epoch_id INTEGER")
 
     # Indexes for efficient epoch-based queries
     create_if_not_exists(index("locations", [:epoch_id]))
@@ -38,9 +33,6 @@ defmodule EctoQueryExplorer.Migration1 do
     # Same file:line in different epochs should be different records
     drop_if_exists(index("locations", [:file, :line]))
     create_if_not_exists(index("locations", [:file, :line, :epoch_id], unique: true))
-
-    # Update unique index on stacktrace_entries to account for epoch
-    # (stacktrace_id already carries epoch context via its epoch_id)
   end
 
   def down do

@@ -3,7 +3,7 @@ defmodule EctoQueryExplorer.DataTest do
 
   import Ecto.Query
 
-  alias EctoQueryExplorer.Query
+  alias EctoQueryExplorer.{Epoch, Query}
 
   defmodule Repo do
     use Ecto.Repo,
@@ -35,7 +35,7 @@ defmodule EctoQueryExplorer.DataTest do
     :ok = Ecto.Adapters.SQL.Sandbox.mode(Repo, :manual)
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
 
-    Ecto.Migrator.run(Repo, [{0, EctoQueryExplorer.Migration0}], :up,
+    Ecto.Migrator.run(Repo, [{0, EctoQueryExplorer.Migration0}, {1, EctoQueryExplorer.Migration1}], :up,
       all: true,
       log_migrations_sql: :debug
     )
@@ -60,6 +60,7 @@ defmodule EctoQueryExplorer.DataTest do
                command: :execute,
                columns: ["name", "total_records", "bytes"],
                rows: [
+                 ["epochs", 0, 4096],
                  ["functions", 0, 4096],
                  ["locations", 0, 4096],
                  ["queries", 0, 4096],
@@ -67,7 +68,7 @@ defmodule EctoQueryExplorer.DataTest do
                  ["stacktrace_entries", 0, 4096],
                  ["stacktraces", 0, 4096]
                ],
-               num_rows: 6
+               num_rows: 7
              } == EctoQueryExplorer.Data.repo_stats()
 
       create_query()
@@ -77,6 +78,7 @@ defmodule EctoQueryExplorer.DataTest do
                command: :execute,
                columns: ["name", "total_records", "bytes"],
                rows: [
+                 ["epochs", 1, 4096],
                  ["functions", 6, 4096],
                  ["locations", 6, 4096],
                  ["queries", 1, 4096],
@@ -84,10 +86,59 @@ defmodule EctoQueryExplorer.DataTest do
                  ["stacktrace_entries", 6, 4096],
                  ["stacktraces", 1, 4096]
                ],
-               num_rows: 6
+               num_rows: 7
              } == EctoQueryExplorer.Data.repo_stats()
 
       EctoQueryExplorer.Data.repo_stats()
+    end
+  end
+
+  describe "epochs" do
+    test "creates epoch with default name from HOSTNAME" do
+      System.put_env("HOSTNAME", "test-pod-abc123")
+
+      create_query()
+      EctoQueryExplorer.Data.dump2sqlite()
+
+      epoch = Repo.one(Epoch)
+      assert epoch.name == "test-pod-abc123"
+      assert epoch.collected_at != nil
+
+      System.delete_env("HOSTNAME")
+    end
+
+    test "creates epoch with custom name" do
+      create_query()
+      EctoQueryExplorer.Data.dump2sqlite(epoch_name: "my-custom-epoch")
+
+      epoch = Repo.one(Epoch)
+      assert epoch.name == "my-custom-epoch"
+    end
+
+    test "associates epoch_id with locations, stacktraces, and samples" do
+      create_query()
+      EctoQueryExplorer.Data.dump2sqlite(epoch_name: "test-epoch")
+
+      epoch = Repo.one(Epoch)
+
+      # Check locations have epoch_id
+      locations = Repo.all(EctoQueryExplorer.Location)
+      assert Enum.all?(locations, &(&1.epoch_id == epoch.id))
+
+      # Check stacktraces have epoch_id
+      stacktraces = Repo.all(EctoQueryExplorer.Stacktrace)
+      assert Enum.all?(stacktraces, &(&1.epoch_id == epoch.id))
+
+      # Check samples have epoch_id
+      samples = Repo.all(EctoQueryExplorer.Sample)
+      assert Enum.all?(samples, &(&1.epoch_id == epoch.id))
+
+      # Check queries and functions do NOT have epoch_id (content-addressable)
+      queries = Repo.all(EctoQueryExplorer.Query)
+      assert Enum.all?(queries, &(not Map.has_key?(&1, :epoch_id)))
+
+      functions = Repo.all(EctoQueryExplorer.Function)
+      assert Enum.all?(functions, &(not Map.has_key?(&1, :epoch_id)))
     end
   end
 

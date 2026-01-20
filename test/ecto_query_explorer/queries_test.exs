@@ -24,6 +24,10 @@ defmodule EctoQueryExplorer.QueriesTest do
   end
 
   setup do
+    if :ets.whereis(:testing_data_dump) != :undefined do
+      :ets.delete(:testing_data_dump)
+    end
+
     :ets.new(:testing_data_dump, [:ordered_set, :named_table])
 
     Application.put_env(:my_app, Repo,

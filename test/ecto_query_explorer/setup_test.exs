@@ -26,7 +26,7 @@ defmodule EctoQueryExplorer.SetupTest do
     :ok = Ecto.Adapters.SQL.Sandbox.mode(Repo, :manual)
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
 
-    Ecto.Migrator.run(Repo, [{0, EctoQueryExplorer.Migration0}], :up,
+    Ecto.Migrator.run(Repo, [{0, EctoQueryExplorer.Migration0}, {1, EctoQueryExplorer.Migration1}], :up,
       all: true,
       log_migrations_sql: :debug
     )

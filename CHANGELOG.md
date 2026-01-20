@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The format is loosely based on [Keep a Changelog][keepachangelog], and this
 project adheres to [Semantic Versioning][semver].
 
+## [v0.2.0] - 2026-01-20
+
+### Added
+
+-
+
+### Changed
+
+-
+
+### Fixed
+
+-
+
 ## [v0.1.4]
 
 ### Added

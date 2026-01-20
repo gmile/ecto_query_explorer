@@ -1,7 +1,7 @@
 defmodule EctoQueryExplorer.Sample do
   use Ecto.Schema
 
-  alias EctoQueryExplorer.{Query, Stacktrace}
+  alias EctoQueryExplorer.{Epoch, Query, Stacktrace}
 
   schema "samples" do
     field :total_time, :integer
@@ -10,6 +10,7 @@ defmodule EctoQueryExplorer.Sample do
     field :queue_time, :integer
     field :params, :binary
 
+    belongs_to :epoch, Epoch
     belongs_to :query, Query
     belongs_to :stacktrace, Stacktrace
 

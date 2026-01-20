@@ -1,47 +1,41 @@
-name: Tests
+name: CI
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
   push:
-    branches:
-      - main
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-  ci:
-    runs-on: ubuntu-24.04
-
-    services:
-      postgresql:
-        image: postgres:16
-        ports:
-        - 5432:5432
-        env:
-          POSTGRES_HOST_AUTH_METHOD: "trust"
-
-    env:
-      MIX_ENV: test
+  test:
+    name: Test
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Install OTP and Elixir
-      id: setup-beam
-      uses: erlef/setup-beam@v1
-      with:
-        version-file: .tool-versions
-        version-type: strict
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: 1.19.5
+          otp-version: 28.3
 
-    - name: Download and compile dependencies
-      run: mix deps.get + deps.compile
+      - name: Restore dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-
 
-    - name: Check formatting
-      run: mix format --check-formatted
+      - name: Install dependencies
+        run: mix deps.get
 
-    - name: Compile
-      run: mix compile --warnings-as-errors
+      - name: Compile
+        run: mix compile --warnings-as-errors
 
-    - name: Run tests
-      run: mix test
+      - name: Check formatting
+        run: mix format --check-formatted
+
+      - name: Run tests
+        run: mix test

@@ -63,7 +63,7 @@ defmodule EctoQueryExplorer.Data do
 
   ## Options
 
-    * `:epoch_name` - Name for this epoch. Defaults to HOSTNAME env var or "unknown".
+    * `:epoch_name` - Name for this epoch. Defaults to "1".
 
   ## Examples
 
@@ -158,7 +158,7 @@ defmodule EctoQueryExplorer.Data do
   end
 
   defp create_epoch(repo, opts) do
-    name = opts[:epoch_name] || System.get_env("HOSTNAME") || "unknown"
+    name = opts[:epoch_name] || "1"
 
     {1, [%{id: epoch_id}]} =
       repo.insert_all(Epoch, [%{name: name, collected_at: DateTime.utc_now()}], returning: [:id])

@@ -94,17 +94,13 @@ defmodule EctoQueryExplorer.DataTest do
   end
 
   describe "epochs" do
-    test "creates epoch with default name from HOSTNAME" do
-      System.put_env("HOSTNAME", "test-pod-abc123")
-
+    test "creates epoch with default name" do
       create_query()
       EctoQueryExplorer.Data.dump2sqlite()
 
       epoch = Repo.one(Epoch)
-      assert epoch.name == "test-pod-abc123"
+      assert epoch.name == "1"
       assert epoch.collected_at != nil
-
-      System.delete_env("HOSTNAME")
     end
 
     test "creates epoch with custom name" do

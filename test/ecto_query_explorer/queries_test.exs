@@ -180,7 +180,7 @@ defmodule EctoQueryExplorer.QueriesTest do
         otp_app: :my_app
     end
 
-    Application.put_env(:my_app, App.Repo, database: "app_repo_test", username: "postgres")
+    Application.put_env(:my_app, App.Repo, database: "app_repo_test", username: "postgres", password: "postgres")
 
     _ = App.Repo.__adapter__().storage_down(App.Repo.config())
     App.Repo.__adapter__().storage_up(App.Repo.config())

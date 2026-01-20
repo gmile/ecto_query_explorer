@@ -1,0 +1,69 @@
+direction: right
+
+epochs: {
+  shape: sql_table
+  id: UniqueID {constraint: primary_key}
+  name: string
+  collected_at: utc_datetime_usec
+}
+
+queries: {
+  shape: sql_table
+  id: UniqueID {constraint: primary_key}
+  text: string
+  counter: integer
+}
+
+samples: {
+  shape: sql_table
+  id: UniqueID {constraint: primary_key}
+  total_time: integer
+  queue_time: integer
+  decode_time: integer
+  query_time: integer
+  query_id: integer {constraint: foreign_key}
+  stacktrace_id: integer {constraint: foreign_key}
+  epoch_id: integer {constraint: foreign_key}
+  params: binary
+}
+
+stacktraces: {
+  shape: sql_table
+  id: UniqueID {constraint: primary_key}
+  counter: integer
+  epoch_id: integer {constraint: foreign_key}
+}
+
+stacktrace_entries: {
+  shape: sql_table
+  id: UniqueID {constraint: primary_key}
+  index: integer
+  stacktrace_id: integer {constraint: foreign_key}
+  location_id: integer {constraint: foreign_key}
+  function_id: integer {constraint: foreign_key}
+}
+
+locations: {
+  shape: sql_table
+  id: UniqueID {constraint: primary_key}
+  file: string
+  line: integer
+  epoch_id: integer {constraint: foreign_key}
+}
+
+functions: {
+  shape: sql_table
+  id: UniqueID {constraint: primary_key}
+  function: string
+  module: string
+  arity: integer
+}
+
+samples.query_id -> queries.id
+samples.stacktrace_id -> stacktraces.id
+samples.epoch_id -> epochs.id
+stacktraces.epoch_id -> epochs.id
+stacktrace_entries.stacktrace_id -> stacktraces.id
+stacktrace_entries.location_id -> locations.id
+stacktrace_entries.function_id -> functions.id
+locations.epoch_id -> epochs.id

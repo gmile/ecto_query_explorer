@@ -1,10 +1,12 @@
 defmodule EctoQueryExplorer.MixProject do
   use Mix.Project
 
+  @version File.read!("VERSION") |> String.trim()
+
   def project do
     [
       app: :ecto_query_explorer,
-      version: "0.1.4",
+      version: @version,
       elixir: "~> 1.17",
       package: package(),
       start_permanent: Mix.env() == :prod,
@@ -30,7 +32,7 @@ defmodule EctoQueryExplorer.MixProject do
       description: "A tool used to gather and analyse Ecto query telemetry",
       maintainers: ["Ievgen Pyrogov"],
       licenses: ["MIT"],
-      files: ["lib/*", "mix.exs", "README.md", "LICENSE", "CHANGELOG.md"],
+      files: ["lib/*", "mix.exs", "VERSION", "README.md", "LICENSE", "CHANGELOG.md"],
       links: %{
         "GitHub" => "https://github.com/gmile/ecto_query_explorer"
       }

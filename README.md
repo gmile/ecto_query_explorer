@@ -269,12 +269,13 @@ Here are some examples:
 
 To publish a new version:
 
-1. Update version in `mix.exs`
-2. Update `CHANGELOG.md`
-3. Commit changes: `git commit -am "Release vX.Y.Z"`
-4. Create and push tag: `git tag vX.Y.Z && git push origin main --tags`
+```sh
+mix bump patch  # or minor, or major
+git push origin main --tags
+```
 
-The release workflow will automatically publish to Hex and create a GitHub release.
+The `mix bump` task will update VERSION, add a changelog entry, commit, and tag.
+The release workflow will then automatically publish to Hex and create a GitHub release.
 
 ## License
 

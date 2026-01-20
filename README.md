@@ -265,6 +265,17 @@ Here are some examples:
 
     Run `mix run flamegraph-handle-event.exs`, then use https://www.speedscope.app to view the resulting file
 
+## Releasing
+
+To publish a new version:
+
+1. Update version in `mix.exs`
+2. Update `CHANGELOG.md`
+3. Commit changes: `git commit -am "Release vX.Y.Z"`
+4. Create and push tag: `git tag vX.Y.Z && git push origin main --tags`
+
+The release workflow will automatically publish to Hex and create a GitHub release.
+
 ## License
 
 EctoQueryExplorer is licensed under MIT license. See [LICENSE](LICENSE) for more details.

@@ -164,19 +164,16 @@ defmodule EctoQueryExplorer.Data do
       Logger.info("Preparing to dump #{count} #{name}")
     end)
 
-    repo.delete_all(StacktraceEntry)
-    repo.delete_all(Sample)
-    repo.delete_all(Stacktrace)
-    repo.delete_all(Function)
-    repo.delete_all(Location)
-    repo.delete_all(Query)
-
     sqlite_params_limit = 32766
 
-    insert_in_batches(repo, Query, queries_spec, ets_table, div(sqlite_params_limit, 5))
+    insert_in_batches(repo, Query, queries_spec, ets_table, div(sqlite_params_limit, 5), nil, replace: [:counter])
     insert_in_batches(repo, Location, locations_spec, ets_table, div(sqlite_params_limit, 3), epoch_id)
     insert_in_batches(repo, Function, functions_spec, ets_table, div(sqlite_params_limit, 4))
-    insert_in_batches(repo, Stacktrace, stacktraces_spec, ets_table, div(sqlite_params_limit, 2), epoch_id)
+
+    insert_in_batches(repo, Stacktrace, stacktraces_spec, ets_table, div(sqlite_params_limit, 2), epoch_id,
+      replace: [:counter]
+    )
+
     insert_in_batches(repo, Sample, samples_spec, ets_table, div(sqlite_params_limit, 8), epoch_id)
     insert_in_batches(repo, StacktraceEntry, stacktrace_entries_spec, ets_table, div(sqlite_params_limit, 5))
 
@@ -192,7 +189,7 @@ defmodule EctoQueryExplorer.Data do
     epoch_id
   end
 
-  def insert_in_batches(repo, schema, spec, ets_table, batch_size, epoch_id \\ nil) do
+  def insert_in_batches(repo, schema, spec, ets_table, batch_size, epoch_id \\ nil, opts \\ []) do
     result =
       if is_atom(ets_table) do
         :ets.select(ets_table, [spec], batch_size)
@@ -200,23 +197,26 @@ defmodule EctoQueryExplorer.Data do
         :ets.select(ets_table)
       end
 
-    do_insert_in_batches(repo, schema, result, batch_size, epoch_id)
+    do_insert_in_batches(repo, schema, result, batch_size, epoch_id, opts)
   end
 
-  defp do_insert_in_batches(_repo, _schema, :"$end_of_table", _batch_size, _epoch_id), do: :ok
+  defp do_insert_in_batches(_repo, _schema, :"$end_of_table", _batch_size, _epoch_id, _opts), do: :ok
 
-  defp do_insert_in_batches(repo, schema, {items, :"$end_of_table"}, _batch_size, epoch_id) do
+  defp do_insert_in_batches(repo, schema, {items, :"$end_of_table"}, _batch_size, epoch_id, opts) do
     items = maybe_add_epoch_id(items, epoch_id)
-    Logger.info("Inserted #{length(items)} records into #{inspect(schema)}")
-    repo.insert_all(schema, items)
+    Logger.info("Inserting #{length(items)} records into #{inspect(schema)}")
+    repo.insert_all(schema, items, insert_opts(opts))
   end
 
-  defp do_insert_in_batches(repo, schema, {items, cont}, batch_size, epoch_id) do
+  defp do_insert_in_batches(repo, schema, {items, cont}, batch_size, epoch_id, opts) do
     items = maybe_add_epoch_id(items, epoch_id)
-    Logger.info("Inserted #{length(items)} records into #{inspect(schema)}")
-    repo.insert_all(schema, items)
-    do_insert_in_batches(repo, schema, :ets.select(cont), batch_size, epoch_id)
+    Logger.info("Inserting #{length(items)} records into #{inspect(schema)}")
+    repo.insert_all(schema, items, insert_opts(opts))
+    do_insert_in_batches(repo, schema, :ets.select(cont), batch_size, epoch_id, opts)
   end
+
+  defp insert_opts([]), do: [on_conflict: :nothing]
+  defp insert_opts(replace: fields), do: [on_conflict: {:replace, fields}, conflict_target: [:id]]
 
   defp maybe_add_epoch_id(items, nil), do: items
   defp maybe_add_epoch_id(items, epoch_id), do: Enum.map(items, &Map.put(&1, :epoch_id, epoch_id))

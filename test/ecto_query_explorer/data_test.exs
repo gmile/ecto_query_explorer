@@ -136,6 +136,40 @@ defmodule EctoQueryExplorer.DataTest do
       functions = Repo.all(EctoQueryExplorer.Function)
       assert Enum.all?(functions, &(not Map.has_key?(&1, :epoch_id)))
     end
+
+    test "data accumulates across epochs: same epoch = no ETS reset, new epoch = ETS reset" do
+      # Pod 1: first dump
+      insert_minimal_query(1, "query-1", counter: 5)
+      EctoQueryExplorer.Data.dump2sqlite(epoch_name: "pod-1")
+      assert_queries(%{1 => 5})
+
+      # Pod 1: second dump (no ETS reset, counter updates)
+      insert_minimal_query(2, "query-2", counter: 3)
+      update_query_counter(1, 10)
+      EctoQueryExplorer.Data.dump2sqlite(epoch_name: "pod-1")
+      assert_queries(%{1 => 10, 2 => 3})
+
+      # Pod 2: first dump (ETS reset, new queries)
+      :ets.delete_all_objects(:testing_data_dump)
+      insert_minimal_query(3, "query-3", counter: 7)
+      EctoQueryExplorer.Data.dump2sqlite(epoch_name: "pod-2")
+      assert_queries(%{1 => 10, 2 => 3, 3 => 7})
+
+      # Pod 2: second dump (no ETS reset, counter updates)
+      insert_minimal_query(4, "query-4", counter: 2)
+      update_query_counter(3, 15)
+      EctoQueryExplorer.Data.dump2sqlite(epoch_name: "pod-2")
+      assert_queries(%{1 => 10, 2 => 3, 3 => 15, 4 => 2})
+
+      # Pod 3: single dump (ETS reset)
+      :ets.delete_all_objects(:testing_data_dump)
+      insert_minimal_query(5, "query-5", counter: 100)
+      EctoQueryExplorer.Data.dump2sqlite(epoch_name: "pod-3")
+      assert_queries(%{1 => 10, 2 => 3, 3 => 15, 4 => 2, 5 => 100})
+
+      assert ["pod-1", "pod-1", "pod-2", "pod-2", "pod-3"] ==
+               Repo.all(from(e in Epoch, select: e.name, order_by: e.id))
+    end
   end
 
   describe "dumps stacktraces data correctly" do
@@ -306,5 +340,35 @@ defmodule EctoQueryExplorer.DataTest do
       {{:stacktrace_entries, 119_695_449}, 59_205_549, 45_708_481, 30_369_914, 1},
       {{:stacktraces, 59_205_549}, 1}
     ])
+  end
+
+  defp insert_minimal_query(id, text, opts \\ []) do
+    func_id = id * 10 + 1
+    loc_id = id * 10 + 2
+    st_id = id * 10 + 3
+    ste_id = id * 10 + 4
+    counter = Keyword.get(opts, :counter, 1)
+
+    :ets.insert_new(:testing_data_dump, [
+      {{:functions, func_id}, "Mod#{id}", "func", 1},
+      {{:locations, loc_id}, "lib/mod#{id}.ex", id},
+      {{:queries, id}, text, "App.Repo", "table", counter},
+      {{:samples, id}, id, 1000, 100, 800, 100, st_id, <<131, 106>>},
+      {{:stacktrace_entries, ste_id}, st_id, func_id, loc_id, 0},
+      {{:stacktraces, st_id}, 1}
+    ])
+  end
+
+  defp update_query_counter(id, new_counter) do
+    [{key, text, repo, source, _old_counter}] = :ets.lookup(:testing_data_dump, {:queries, id})
+    :ets.insert(:testing_data_dump, {key, text, repo, source, new_counter})
+  end
+
+  defp assert_queries(expected) do
+    actual =
+      Repo.all(from(q in Query, select: {q.id, q.counter}))
+      |> Map.new()
+
+    assert expected == actual
   end
 end

@@ -141,7 +141,8 @@ defmodule EctoQueryExplorer.DataTest do
       EctoQueryExplorer.Data.dump2sqlite(dump_name: "pod-3")
       assert_queries(%{1 => 10, 2 => 3, 3 => 15, 4 => 2, 5 => 100})
 
-      assert ["pod-1", "pod-1", "pod-2", "pod-2", "pod-3"] ==
+      # Dump names are unique - subsequent dumps with same name reuse existing record
+      assert ["pod-1", "pod-2", "pod-3"] ==
                Repo.all(from(e in Dump, select: e.name, order_by: e.id))
     end
   end

@@ -16,6 +16,8 @@ defmodule EctoQueryExplorer.Migration1 do
       add(:collected_at, :utc_datetime_usec, null: false)
     end
 
+    create_if_not_exists(index("dumps", [:name], unique: true))
+
     # Add dump_id to tables where it matters for provenance
     # Note: SQLite doesn't support ALTER TABLE ADD COLUMN with REFERENCES,
     # so we add the column without the constraint. The relationship is
@@ -58,6 +60,7 @@ defmodule EctoQueryExplorer.Migration1 do
       remove_if_exists(:dump_id, :integer)
     end
 
+    drop_if_exists(index("dumps", [:name]))
     drop_if_exists(table("dumps"))
   end
 end

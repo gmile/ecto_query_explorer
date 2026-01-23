@@ -183,8 +183,12 @@ defmodule EctoQueryExplorer.Data do
   defp create_dump(repo, opts) do
     name = opts[:dump_name] || "1"
 
-    {1, [%{id: dump_id}]} =
-      repo.insert_all(Dump, [%{name: name, collected_at: DateTime.utc_now()}], returning: [:id])
+    {_, [%{id: dump_id}]} =
+      repo.insert_all(Dump, [%{name: name, collected_at: DateTime.utc_now()}],
+        on_conflict: {:replace, [:collected_at]},
+        conflict_target: [:name],
+        returning: [:id]
+      )
 
     dump_id
   end

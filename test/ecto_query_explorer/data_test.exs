@@ -4,41 +4,15 @@ defmodule EctoQueryExplorer.DataTest do
   import Ecto.Query
 
   alias EctoQueryExplorer.{Epoch, Query}
-
-  defmodule Repo do
-    use Ecto.Repo,
-      adapter: Ecto.Adapters.SQLite3,
-      otp_app: :my_app,
-      warn: false
-  end
+  alias EctoQueryExplorer.TestRepo, as: Repo
 
   setup do
-    Application.put_all_env(
-      ecto_query_explorer: [
-        ets_table_name: :testing_data_dump,
-        repo: Repo
-      ]
-    )
-
-    :ets.new(:testing_data_dump, [:ordered_set, :named_table])
-
-    Application.put_env(:my_app, Repo,
-      database: ":memory:",
-      pool: Ecto.Adapters.SQL.Sandbox,
-      pool_size: 1
-    )
-
-    Repo.__adapter__().storage_up(Repo.config())
-
-    {:ok, _pid} = Repo.start_link()
-
-    :ok = Ecto.Adapters.SQL.Sandbox.mode(Repo, :manual)
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
 
-    Ecto.Migrator.run(Repo, [{0, EctoQueryExplorer.Migration0}, {1, EctoQueryExplorer.Migration1}], :up,
-      all: true,
-      log_migrations_sql: :debug
-    )
+    Application.put_env(:ecto_query_explorer, :ets_table_name, :testing_data_dump)
+    Application.put_env(:ecto_query_explorer, :repo, Repo)
+
+    :ets.new(:testing_data_dump, [:ordered_set, :named_table, :public])
 
     :ok
   end
@@ -342,7 +316,7 @@ defmodule EctoQueryExplorer.DataTest do
     ])
   end
 
-  defp insert_minimal_query(id, text, opts \\ []) do
+  defp insert_minimal_query(id, text, opts) do
     func_id = id * 10 + 1
     loc_id = id * 10 + 2
     st_id = id * 10 + 3

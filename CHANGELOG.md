@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The format is loosely based on [Keep a Changelog][keepachangelog], and this
 project adheres to [Semantic Versioning][semver].
 
+## [v0.3.0] - 2026-01-23
+
+- Rename epochs to dumps (#10)
+- Update release script (#9)
+- Fix changelog generation and test infrastructure (#8)
+- Update release script (a5891c2)
+- Correctly load helper code in tests (276c149)
+
 ## [v0.2.1] - 2026-01-23
 
 - Accumulate data across multiple dumps instead of overwriting (#7)

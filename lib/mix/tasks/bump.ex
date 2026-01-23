@@ -129,7 +129,7 @@ defmodule Mix.Tasks.Bump do
   defp fetch_merged_prs(since_date) do
     args =
       ["pr", "list", "--state", "merged", "--json", "number,title", "--jq", ".[] | \"\\(.number)\\t\\(.title)\""] ++
-        if(since_date, do: ["--search", "merged:>=#{since_date}"], else: [])
+        if(since_date, do: ["--search", "merged:>#{since_date}"], else: [])
 
     case System.cmd("gh", args) do
       {output, 0} ->

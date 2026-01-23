@@ -21,7 +21,7 @@ defmodule EctoQueryExplorer.Data do
   when merging data from multiple pods or deployments - you can see which dump
   each sample came from.
 
-      EctoQueryExplorer.Data.dump2sqlite(dump_name: "api-pod-abc123")
+      EctoQueryExplorer.Data.dump2sqlite(name: "api-pod-abc123")
 
   """
 
@@ -89,12 +89,12 @@ defmodule EctoQueryExplorer.Data do
 
   ## Options
 
-    * `:dump_name` - Name for this epoch. Defaults to "1".
+    * `:name` - Name for this epoch. Defaults to "1".
 
   ## Examples
 
       EctoQueryExplorer.Data.dump2sqlite()
-      EctoQueryExplorer.Data.dump2sqlite(dump_name: "v1.2.3-pod-abc123")
+      EctoQueryExplorer.Data.dump2sqlite(name: "v1.2.3-pod-abc123")
   """
   def dump2sqlite(opts \\ []) do
     ets_table = Application.fetch_env!(:ecto_query_explorer, :ets_table_name)
@@ -181,7 +181,7 @@ defmodule EctoQueryExplorer.Data do
   end
 
   defp create_dump(repo, opts) do
-    name = opts[:dump_name] || "1"
+    name = opts[:name] || "1"
 
     {_, [%{id: dump_id}]} =
       repo.insert_all(Dump, [%{name: name, collected_at: DateTime.utc_now()}],

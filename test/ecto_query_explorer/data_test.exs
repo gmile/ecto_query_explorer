@@ -79,7 +79,7 @@ defmodule EctoQueryExplorer.DataTest do
 
     test "creates dump with custom name" do
       create_query()
-      EctoQueryExplorer.Data.dump2sqlite(dump_name: "my-custom-dump")
+      EctoQueryExplorer.Data.dump2sqlite(name: "my-custom-dump")
 
       dump = Repo.one(Dump)
       assert dump.name == "my-custom-dump"
@@ -87,7 +87,7 @@ defmodule EctoQueryExplorer.DataTest do
 
     test "associates dump_id with locations, stacktraces, and samples" do
       create_query()
-      EctoQueryExplorer.Data.dump2sqlite(dump_name: "test-dump")
+      EctoQueryExplorer.Data.dump2sqlite(name: "test-dump")
 
       dump = Repo.one(Dump)
 
@@ -114,31 +114,31 @@ defmodule EctoQueryExplorer.DataTest do
     test "data accumulates across dumps: same dump = no ETS reset, new dump = ETS reset" do
       # Pod 1: first dump
       insert_minimal_query(1, "query-1", counter: 5)
-      EctoQueryExplorer.Data.dump2sqlite(dump_name: "pod-1")
+      EctoQueryExplorer.Data.dump2sqlite(name: "pod-1")
       assert_queries(%{1 => 5})
 
       # Pod 1: second dump (no ETS reset, counter updates)
       insert_minimal_query(2, "query-2", counter: 3)
       update_query_counter(1, 10)
-      EctoQueryExplorer.Data.dump2sqlite(dump_name: "pod-1")
+      EctoQueryExplorer.Data.dump2sqlite(name: "pod-1")
       assert_queries(%{1 => 10, 2 => 3})
 
       # Pod 2: first dump (ETS reset, new queries)
       :ets.delete_all_objects(:testing_data_dump)
       insert_minimal_query(3, "query-3", counter: 7)
-      EctoQueryExplorer.Data.dump2sqlite(dump_name: "pod-2")
+      EctoQueryExplorer.Data.dump2sqlite(name: "pod-2")
       assert_queries(%{1 => 10, 2 => 3, 3 => 7})
 
       # Pod 2: second dump (no ETS reset, counter updates)
       insert_minimal_query(4, "query-4", counter: 2)
       update_query_counter(3, 15)
-      EctoQueryExplorer.Data.dump2sqlite(dump_name: "pod-2")
+      EctoQueryExplorer.Data.dump2sqlite(name: "pod-2")
       assert_queries(%{1 => 10, 2 => 3, 3 => 15, 4 => 2})
 
       # Pod 3: single dump (ETS reset)
       :ets.delete_all_objects(:testing_data_dump)
       insert_minimal_query(5, "query-5", counter: 100)
-      EctoQueryExplorer.Data.dump2sqlite(dump_name: "pod-3")
+      EctoQueryExplorer.Data.dump2sqlite(name: "pod-3")
       assert_queries(%{1 => 10, 2 => 3, 3 => 15, 4 => 2, 5 => 100})
 
       # Dump names are unique - subsequent dumps with same name reuse existing record

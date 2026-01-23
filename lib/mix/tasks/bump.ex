@@ -114,35 +114,30 @@ defmodule Mix.Tasks.Bump do
   end
 
   defp get_merged_prs_since_last_tag do
-    case System.cmd("git", ["describe", "--tags", "--abbrev=0"], stderr_to_stdout: true) do
-      {tag, 0} ->
-        last_tag = String.trim(tag)
-        {date, 0} = System.cmd("git", ["log", "-1", "--format=%cs", last_tag])
-        fetch_merged_prs(String.trim(date))
+    range =
+      case System.cmd("git", ["describe", "--tags", "--abbrev=0"], stderr_to_stdout: true) do
+        {tag, 0} -> "#{String.trim(tag)}..HEAD"
+        _ -> "HEAD"
+      end
 
-      _ ->
-        # No tags yet, get all merged PRs
-        fetch_merged_prs(nil)
+    {output, 0} = System.cmd("git", ["log", range, "--oneline", "--grep=Merge pull request"])
+
+    output
+    |> String.split("\n", trim: true)
+    |> Enum.map(&parse_pr_number/1)
+    |> Enum.reject(&is_nil/1)
+    |> Enum.map(&fetch_pr_title/1)
+  end
+
+  defp parse_pr_number(line) do
+    case Regex.run(~r/Merge pull request #(\d+)/, line) do
+      [_, number] -> number
+      _ -> nil
     end
   end
 
-  defp fetch_merged_prs(since_date) do
-    args =
-      ["pr", "list", "--state", "merged", "--json", "number,title", "--jq", ".[] | \"\\(.number)\\t\\(.title)\""] ++
-        if(since_date, do: ["--search", "merged:>#{since_date}"], else: [])
-
-    case System.cmd("gh", args) do
-      {output, 0} ->
-        output
-        |> String.trim()
-        |> String.split("\n", trim: true)
-        |> Enum.map(fn line ->
-          [number, title] = String.split(line, "\t", parts: 2)
-          {number, title}
-        end)
-
-      _ ->
-        []
-    end
+  defp fetch_pr_title(number) do
+    {title, 0} = System.cmd("gh", ["pr", "view", number, "--json", "title", "--jq", ".title"])
+    {number, String.trim(title)}
   end
 end

@@ -15,20 +15,20 @@ defmodule EctoQueryExplorer.Data do
       # Check SQLite table sizes
       EctoQueryExplorer.Data.repo_stats()
 
-  ## Epochs
+  ## Dumps
 
-  Each dump creates an "epoch" record to track data provenance. This is useful
-  when merging data from multiple pods or deployments - you can see which epoch
+  Each dump creates a "dump" record to track data provenance. This is useful
+  when merging data from multiple pods or deployments - you can see which dump
   each sample came from.
 
-      EctoQueryExplorer.Data.dump2sqlite(epoch_name: "api-pod-abc123")
+      EctoQueryExplorer.Data.dump2sqlite(dump_name: "api-pod-abc123")
 
   """
 
   require Logger
 
   alias EctoQueryExplorer.{
-    Epoch,
+    Dump,
     Query,
     Sample,
     Stacktrace,
@@ -52,7 +52,7 @@ defmodule EctoQueryExplorer.Data do
     sqlite_stats = """
     with
     records as (
-      select 'epochs' name, count(1) total_records from epochs
+      select 'dumps' name, count(1) total_records from dumps
       union
       select 'queries' name, count(1) total_records from queries
       union
@@ -70,7 +70,7 @@ defmodule EctoQueryExplorer.Data do
         select SUM(pgsize) bytes,
                name
           from dbstat
-         where name in ('epochs', 'queries', 'samples', 'functions', 'locations', 'stacktrace_entries', 'stacktraces')
+         where name in ('dumps', 'queries', 'samples', 'functions', 'locations', 'stacktrace_entries', 'stacktraces')
       group by name
     )
       select r.name,
@@ -89,19 +89,19 @@ defmodule EctoQueryExplorer.Data do
 
   ## Options
 
-    * `:epoch_name` - Name for this epoch. Defaults to "1".
+    * `:dump_name` - Name for this epoch. Defaults to "1".
 
   ## Examples
 
       EctoQueryExplorer.Data.dump2sqlite()
-      EctoQueryExplorer.Data.dump2sqlite(epoch_name: "v1.2.3-pod-abc123")
+      EctoQueryExplorer.Data.dump2sqlite(dump_name: "v1.2.3-pod-abc123")
   """
   def dump2sqlite(opts \\ []) do
     ets_table = Application.fetch_env!(:ecto_query_explorer, :ets_table_name)
     repo = Application.fetch_env!(:ecto_query_explorer, :repo)
 
-    epoch_id = create_epoch(repo, opts)
-    Logger.info("Created epoch #{epoch_id}")
+    dump_id = create_dump(repo, opts)
+    Logger.info("Created epoch #{dump_id}")
 
     queries_spec =
       {{{:queries, :"$1"}, :"$2", :"$3", :"$4", :"$5"}, [],
@@ -167,29 +167,29 @@ defmodule EctoQueryExplorer.Data do
     sqlite_params_limit = 32766
 
     insert_in_batches(repo, Query, queries_spec, ets_table, div(sqlite_params_limit, 5), nil, replace: [:counter])
-    insert_in_batches(repo, Location, locations_spec, ets_table, div(sqlite_params_limit, 3), epoch_id)
+    insert_in_batches(repo, Location, locations_spec, ets_table, div(sqlite_params_limit, 3), dump_id)
     insert_in_batches(repo, Function, functions_spec, ets_table, div(sqlite_params_limit, 4))
 
-    insert_in_batches(repo, Stacktrace, stacktraces_spec, ets_table, div(sqlite_params_limit, 2), epoch_id,
+    insert_in_batches(repo, Stacktrace, stacktraces_spec, ets_table, div(sqlite_params_limit, 2), dump_id,
       replace: [:counter]
     )
 
-    insert_in_batches(repo, Sample, samples_spec, ets_table, div(sqlite_params_limit, 8), epoch_id)
+    insert_in_batches(repo, Sample, samples_spec, ets_table, div(sqlite_params_limit, 8), dump_id)
     insert_in_batches(repo, StacktraceEntry, stacktrace_entries_spec, ets_table, div(sqlite_params_limit, 5))
 
     Logger.info("Collected data is now available to query using #{repo} repo (#{repo.config()[:database]} database)")
   end
 
-  defp create_epoch(repo, opts) do
-    name = opts[:epoch_name] || "1"
+  defp create_dump(repo, opts) do
+    name = opts[:dump_name] || "1"
 
-    {1, [%{id: epoch_id}]} =
-      repo.insert_all(Epoch, [%{name: name, collected_at: DateTime.utc_now()}], returning: [:id])
+    {1, [%{id: dump_id}]} =
+      repo.insert_all(Dump, [%{name: name, collected_at: DateTime.utc_now()}], returning: [:id])
 
-    epoch_id
+    dump_id
   end
 
-  def insert_in_batches(repo, schema, spec, ets_table, batch_size, epoch_id \\ nil, opts \\ []) do
+  def insert_in_batches(repo, schema, spec, ets_table, batch_size, dump_id \\ nil, opts \\ []) do
     result =
       if is_atom(ets_table) do
         :ets.select(ets_table, [spec], batch_size)
@@ -197,27 +197,27 @@ defmodule EctoQueryExplorer.Data do
         :ets.select(ets_table)
       end
 
-    do_insert_in_batches(repo, schema, result, batch_size, epoch_id, opts)
+    do_insert_in_batches(repo, schema, result, batch_size, dump_id, opts)
   end
 
-  defp do_insert_in_batches(_repo, _schema, :"$end_of_table", _batch_size, _epoch_id, _opts), do: :ok
+  defp do_insert_in_batches(_repo, _schema, :"$end_of_table", _batch_size, _dump_id, _opts), do: :ok
 
-  defp do_insert_in_batches(repo, schema, {items, :"$end_of_table"}, _batch_size, epoch_id, opts) do
-    items = maybe_add_epoch_id(items, epoch_id)
+  defp do_insert_in_batches(repo, schema, {items, :"$end_of_table"}, _batch_size, dump_id, opts) do
+    items = maybe_add_dump_id(items, dump_id)
     Logger.info("Inserting #{length(items)} records into #{inspect(schema)}")
     repo.insert_all(schema, items, insert_opts(opts))
   end
 
-  defp do_insert_in_batches(repo, schema, {items, cont}, batch_size, epoch_id, opts) do
-    items = maybe_add_epoch_id(items, epoch_id)
+  defp do_insert_in_batches(repo, schema, {items, cont}, batch_size, dump_id, opts) do
+    items = maybe_add_dump_id(items, dump_id)
     Logger.info("Inserting #{length(items)} records into #{inspect(schema)}")
     repo.insert_all(schema, items, insert_opts(opts))
-    do_insert_in_batches(repo, schema, :ets.select(cont), batch_size, epoch_id, opts)
+    do_insert_in_batches(repo, schema, :ets.select(cont), batch_size, dump_id, opts)
   end
 
   defp insert_opts([]), do: [on_conflict: :nothing]
   defp insert_opts(replace: fields), do: [on_conflict: {:replace, fields}, conflict_target: [:id]]
 
-  defp maybe_add_epoch_id(items, nil), do: items
-  defp maybe_add_epoch_id(items, epoch_id), do: Enum.map(items, &Map.put(&1, :epoch_id, epoch_id))
+  defp maybe_add_dump_id(items, nil), do: items
+  defp maybe_add_dump_id(items, dump_id), do: Enum.map(items, &Map.put(&1, :dump_id, dump_id))
 end

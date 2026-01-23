@@ -3,7 +3,7 @@ defmodule EctoQueryExplorer.DataTest do
 
   import Ecto.Query
 
-  alias EctoQueryExplorer.{Epoch, Query}
+  alias EctoQueryExplorer.{Dump, Query}
   alias EctoQueryExplorer.TestRepo, as: Repo
 
   setup do
@@ -34,7 +34,7 @@ defmodule EctoQueryExplorer.DataTest do
                command: :execute,
                columns: ["name", "total_records", "bytes"],
                rows: [
-                 ["epochs", 0, 4096],
+                 ["dumps", 0, 4096],
                  ["functions", 0, 4096],
                  ["locations", 0, 4096],
                  ["queries", 0, 4096],
@@ -52,7 +52,7 @@ defmodule EctoQueryExplorer.DataTest do
                command: :execute,
                columns: ["name", "total_records", "bytes"],
                rows: [
-                 ["epochs", 1, 4096],
+                 ["dumps", 1, 4096],
                  ["functions", 6, 4096],
                  ["locations", 6, 4096],
                  ["queries", 1, 4096],
@@ -67,82 +67,82 @@ defmodule EctoQueryExplorer.DataTest do
     end
   end
 
-  describe "epochs" do
-    test "creates epoch with default name" do
+  describe "dumps" do
+    test "creates dump with default name" do
       create_query()
       EctoQueryExplorer.Data.dump2sqlite()
 
-      epoch = Repo.one(Epoch)
-      assert epoch.name == "1"
-      assert epoch.collected_at != nil
+      dump = Repo.one(Dump)
+      assert dump.name == "1"
+      assert dump.collected_at != nil
     end
 
-    test "creates epoch with custom name" do
+    test "creates dump with custom name" do
       create_query()
-      EctoQueryExplorer.Data.dump2sqlite(epoch_name: "my-custom-epoch")
+      EctoQueryExplorer.Data.dump2sqlite(dump_name: "my-custom-dump")
 
-      epoch = Repo.one(Epoch)
-      assert epoch.name == "my-custom-epoch"
+      dump = Repo.one(Dump)
+      assert dump.name == "my-custom-dump"
     end
 
-    test "associates epoch_id with locations, stacktraces, and samples" do
+    test "associates dump_id with locations, stacktraces, and samples" do
       create_query()
-      EctoQueryExplorer.Data.dump2sqlite(epoch_name: "test-epoch")
+      EctoQueryExplorer.Data.dump2sqlite(dump_name: "test-dump")
 
-      epoch = Repo.one(Epoch)
+      dump = Repo.one(Dump)
 
-      # Check locations have epoch_id
+      # Check locations have dump_id
       locations = Repo.all(EctoQueryExplorer.Location)
-      assert Enum.all?(locations, &(&1.epoch_id == epoch.id))
+      assert Enum.all?(locations, &(&1.dump_id == dump.id))
 
-      # Check stacktraces have epoch_id
+      # Check stacktraces have dump_id
       stacktraces = Repo.all(EctoQueryExplorer.Stacktrace)
-      assert Enum.all?(stacktraces, &(&1.epoch_id == epoch.id))
+      assert Enum.all?(stacktraces, &(&1.dump_id == dump.id))
 
-      # Check samples have epoch_id
+      # Check samples have dump_id
       samples = Repo.all(EctoQueryExplorer.Sample)
-      assert Enum.all?(samples, &(&1.epoch_id == epoch.id))
+      assert Enum.all?(samples, &(&1.dump_id == dump.id))
 
-      # Check queries and functions do NOT have epoch_id (content-addressable)
+      # Check queries and functions do NOT have dump_id (content-addressable)
       queries = Repo.all(EctoQueryExplorer.Query)
-      assert Enum.all?(queries, &(not Map.has_key?(&1, :epoch_id)))
+      assert Enum.all?(queries, &(not Map.has_key?(&1, :dump_id)))
 
       functions = Repo.all(EctoQueryExplorer.Function)
-      assert Enum.all?(functions, &(not Map.has_key?(&1, :epoch_id)))
+      assert Enum.all?(functions, &(not Map.has_key?(&1, :dump_id)))
     end
 
-    test "data accumulates across epochs: same epoch = no ETS reset, new epoch = ETS reset" do
+    test "data accumulates across dumps: same dump = no ETS reset, new dump = ETS reset" do
       # Pod 1: first dump
       insert_minimal_query(1, "query-1", counter: 5)
-      EctoQueryExplorer.Data.dump2sqlite(epoch_name: "pod-1")
+      EctoQueryExplorer.Data.dump2sqlite(dump_name: "pod-1")
       assert_queries(%{1 => 5})
 
       # Pod 1: second dump (no ETS reset, counter updates)
       insert_minimal_query(2, "query-2", counter: 3)
       update_query_counter(1, 10)
-      EctoQueryExplorer.Data.dump2sqlite(epoch_name: "pod-1")
+      EctoQueryExplorer.Data.dump2sqlite(dump_name: "pod-1")
       assert_queries(%{1 => 10, 2 => 3})
 
       # Pod 2: first dump (ETS reset, new queries)
       :ets.delete_all_objects(:testing_data_dump)
       insert_minimal_query(3, "query-3", counter: 7)
-      EctoQueryExplorer.Data.dump2sqlite(epoch_name: "pod-2")
+      EctoQueryExplorer.Data.dump2sqlite(dump_name: "pod-2")
       assert_queries(%{1 => 10, 2 => 3, 3 => 7})
 
       # Pod 2: second dump (no ETS reset, counter updates)
       insert_minimal_query(4, "query-4", counter: 2)
       update_query_counter(3, 15)
-      EctoQueryExplorer.Data.dump2sqlite(epoch_name: "pod-2")
+      EctoQueryExplorer.Data.dump2sqlite(dump_name: "pod-2")
       assert_queries(%{1 => 10, 2 => 3, 3 => 15, 4 => 2})
 
       # Pod 3: single dump (ETS reset)
       :ets.delete_all_objects(:testing_data_dump)
       insert_minimal_query(5, "query-5", counter: 100)
-      EctoQueryExplorer.Data.dump2sqlite(epoch_name: "pod-3")
+      EctoQueryExplorer.Data.dump2sqlite(dump_name: "pod-3")
       assert_queries(%{1 => 10, 2 => 3, 3 => 15, 4 => 2, 5 => 100})
 
       assert ["pod-1", "pod-1", "pod-2", "pod-2", "pod-3"] ==
-               Repo.all(from(e in Epoch, select: e.name, order_by: e.id))
+               Repo.all(from(e in Dump, select: e.name, order_by: e.id))
     end
   end
 

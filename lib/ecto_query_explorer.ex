@@ -32,7 +32,7 @@ defmodule EctoQueryExplorer do
   - `stacktrace_entries` - individual stack frames
   - `functions` - unique module/function/arity combinations
   - `locations` - unique file/line combinations
-  - `epochs` - data provenance tracking for multi-pod environments
+  - `dumps` - data provenance tracking for multi-pod environments
 
   See the schema diagram in the repository for relationships.
   """

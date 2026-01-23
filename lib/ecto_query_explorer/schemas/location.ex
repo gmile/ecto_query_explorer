@@ -1,12 +1,12 @@
 defmodule EctoQueryExplorer.Location do
   use Ecto.Schema
 
-  alias EctoQueryExplorer.Epoch
+  alias EctoQueryExplorer.Dump
 
   schema "locations" do
     field :file, :string
     field :line, :integer
 
-    belongs_to :epoch, Epoch
+    belongs_to :dump, Dump
   end
 end

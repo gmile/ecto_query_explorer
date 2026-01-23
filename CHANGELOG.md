@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The format is loosely based on [Keep a Changelog][keepachangelog], and this
 project adheres to [Semantic Versioning][semver].
 
+## [v0.2.1] - 2026-01-23
+
+- Accumulate data across multiple dumps instead of overwriting (#7)
+- Simplify changelog generation in mix bump (#6)
+- Add ex_doc for HexDocs generation + cleanups (#5)
+- Simplify README, move details to module docs (#4)
+- Add mix bump task for automated releases (#3)
+- Modernize tooling and CI (#2)
+- Add epochs support for data provenance tracking (#1)
+
 ## [v0.2.0] - 2026-01-20
 
 - Add ex_doc for HexDocs generation + cleanups (#5)

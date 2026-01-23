@@ -1,5 +1,3 @@
-Code.require_file("support/test_repo.ex", __DIR__)
-
 Application.put_env(:ecto_query_explorer, EctoQueryExplorer.TestRepo,
   database: "file::memory:?cache=shared",
   pool: Ecto.Adapters.SQL.Sandbox,

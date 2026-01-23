@@ -9,6 +9,7 @@ defmodule EctoQueryExplorer.MixProject do
       app: :ecto_query_explorer,
       version: @version,
       elixir: "~> 1.17",
+      elixirc_paths: elixirc_paths(Mix.env()),
       elixirc_options: elixirc_options(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -19,6 +20,9 @@ defmodule EctoQueryExplorer.MixProject do
       source_url: @source_url
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp elixirc_options(:test), do: [warnings_as_errors: true]
   defp elixirc_options(_), do: []

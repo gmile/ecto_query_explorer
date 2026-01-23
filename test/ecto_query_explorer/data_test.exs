@@ -316,7 +316,7 @@ defmodule EctoQueryExplorer.DataTest do
     ])
   end
 
-  defp insert_minimal_query(id, text, opts \\ []) do
+  defp insert_minimal_query(id, text, opts) do
     func_id = id * 10 + 1
     loc_id = id * 10 + 2
     st_id = id * 10 + 3

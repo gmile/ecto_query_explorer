@@ -12,7 +12,7 @@ Collect and analyze Ecto query telemetry. Find which code produces which queries
 1. Add dependency:
 
     ```elixir
-    {:ecto_query_explorer, "~> 0.1"}
+    {:ecto_query_explorer, "~> 0.4"}
     ```
 
 2. Add a SQLite repo:

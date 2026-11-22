@@ -15,6 +15,11 @@ defmodule EctoQueryExplorer.MixProject do
       deps: deps(),
       package: package(),
       docs: docs(),
+      dialyzer: [
+        plt_add_apps: [:mix],
+        plt_local_path: "priv/plts",
+        plt_core_path: "priv/plts"
+      ],
       name: "EctoQueryExplorer",
       description: "Collect and analyze Ecto query telemetry",
       source_url: @source_url
@@ -31,6 +36,7 @@ defmodule EctoQueryExplorer.MixProject do
     [
       {:telemetry, "~> 1.3"},
       {:ecto_sqlite3, "~> 0.26"},
+      {:dialyxir, "~> 1.4", only: :dev, runtime: false},
       {:ex_doc, "~> 0.40", only: :dev, runtime: false},
       {:eflambe, "~> 0.3", only: :dev},
       {:meck, "~> 1.2", only: :dev, override: true},

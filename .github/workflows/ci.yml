@@ -1,54 +1,29 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - main
+
+permissions:
+  contents: read
 
 jobs:
   test:
-    name: Test
-    runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
+    runs-on: ubuntu-26.04
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
 
-      - uses: erlef/setup-beam@v1
+      - uses: nixbuild/nix-quick-install-action@v35
+
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
         with:
-          elixir-version: 1.19.5
-          otp-version: 28.3
+          use-flakehub: false
+          diagnostic-endpoint: ""
 
-      - name: Restore dependencies cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            deps
-            _build
-          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
-          restore-keys: ${{ runner.os }}-mix-
-
-      - name: Install dependencies
-        run: mix deps.get
-
-      - name: Compile
-        run: mix compile --warnings-as-errors
-
-      - name: Check formatting
-        run: mix format --check-formatted
-
-      - name: Run tests
-        run: mix test
+      - run: nix flake check --print-build-logs

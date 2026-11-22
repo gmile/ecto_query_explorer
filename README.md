@@ -77,6 +77,40 @@ EctoQueryExplorer.Queries.top_queries(10)
 
 See module docs for more: `EctoQueryExplorer`, `EctoQueryExplorer.Queries`, `EctoQueryExplorer.Data`.
 
+## Development
+
+Enter the shell, then use mix as usual:
+
+```sh
+nix develop
+mix compile
+mix dialyzer
+mix docs
+```
+
+Format the Nix files:
+
+```sh
+nix fmt
+```
+
+## Running tests
+
+Run everything CI runs, which is the tests against PostgreSQL from nixpkgs,
+the docs and dialyzer:
+
+```sh
+nix flake check
+```
+
+Or run the tests yourself, against a throwaway PostgreSQL listening on
+`PGPORT`, 5432 by default:
+
+```sh
+nix run .#postgres &
+mix test
+```
+
 ## Releasing
 
 ```sh

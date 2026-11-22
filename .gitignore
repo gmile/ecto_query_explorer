@@ -26,3 +26,5 @@ ecto_query_stats-*.tar
 /tmp/
 
 ecto-query-explorer-*.sqlite3*
+/priv/plts/
+/result*

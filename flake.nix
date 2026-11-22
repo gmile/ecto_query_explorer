@@ -178,7 +178,7 @@
               mix compile --warnings-as-errors
               mix deps.unlock --check-unused
             '';
-            check = "mix test --warnings-as-errors ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux "--include integration"}";
+            check = "mix test --warnings-as-errors --include integration";
           };
           docs = mix {
             name = "docs";

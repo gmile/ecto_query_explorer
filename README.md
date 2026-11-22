@@ -103,8 +103,8 @@ nix flake check
 ```
 
 One test needs PostgreSQL and is left out of a plain `mix test`. On Linux the
-check above starts a PostgreSQL from nixpkgs and includes it. To run it
-yourself, against a PostgreSQL on `localhost:5432` with a `postgres` user:
+check above starts its own. On macOS, and to run that test yourself,
+PostgreSQL must be running on `localhost:5432` with a `postgres` user:
 
 ```sh
 mix test --include integration

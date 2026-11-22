@@ -122,6 +122,7 @@
                 ./CHANGELOG.md
                 ./LICENSE
               ],
+              start ? "cp --recursive --no-preserve=mode ${compiled.${env}}/. .",
               command,
               check ? "",
             }:
@@ -139,8 +140,7 @@
                 export HOME=$TMPDIR MIX_DEPS_PATH=$PWD/deps
                 echo 0.0.0 > VERSION
                 echo 'config :exqlite, force_build: true' >> config/config.exs
-                cp --recursive --no-preserve=mode ${deps} deps
-                mix deps.compile --no-deps-check
+                ${start}
                 ${command}
               '';
               doCheck = check != "";
@@ -151,6 +151,24 @@
               '';
               installPhase = "touch $out";
             };
+          compiled = lib.genAttrs [ "dev" "test" ] (
+            env:
+            mix {
+              name = "deps-${env}";
+              inherit env;
+              files = [
+                ./mix.exs
+                ./mix.lock
+                ./config
+              ];
+              start = "cp --recursive --no-preserve=mode ${deps} deps";
+              command = ''
+                mix deps.compile --no-deps-check
+                mkdir $out
+                cp --recursive deps _build $out
+              '';
+            }
+          );
           plt = mix {
             name = "plt";
             env = "dev";

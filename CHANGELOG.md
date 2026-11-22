@@ -5,8 +5,11 @@ All notable changes will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-The format is loosely based on [Keep a Changelog][keepachangelog], and this
-project adheres to [Semantic Versioning][semver].
+## [Unreleased]
+
+### Changed
+
+- Requires `ecto_sqlite3` 0.26 or newer, which brings Ecto 3.14.
 
 ## [v0.4.1] - 2026-01-23
 

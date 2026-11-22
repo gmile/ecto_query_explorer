@@ -30,10 +30,11 @@ defmodule EctoQueryExplorer.MixProject do
   defp deps do
     [
       {:telemetry, "~> 1.3"},
-      {:ecto_sqlite3, "~> 0.22"},
-      {:ex_doc, "~> 0.39", only: :dev, runtime: false},
+      {:ecto_sqlite3, "~> 0.26"},
+      {:ex_doc, "~> 0.40", only: :dev, runtime: false},
       {:eflambe, "~> 0.3", only: :dev},
-      {:postgrex, "~> 0.22", only: [:dev, :test]},
+      {:meck, "~> 1.2", only: :dev, override: true},
+      {:postgrex, "~> 0.23", only: [:dev, :test]},
       {:jason, "~> 1.4", only: [:dev, :test]}
     ]
   end

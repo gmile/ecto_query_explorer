@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Requires `ecto_sqlite3` 0.26 or newer, which brings Ecto 3.14.
 
+### Removed
+
+- The `mix bump` task, which was only ever meant for releasing this package.
+
 ## [v0.4.1] - 2026-01-23
 
 - No changes

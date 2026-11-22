@@ -113,10 +113,22 @@ mix test
 
 ## Releasing
 
+From a clean `main` that matches `origin/main`, with `major`, `minor` or `patch`:
+
 ```sh
-mix bump patch  # or minor, or major
-git push origin main --tags
+nix run .#release -- minor
 ```
+
+It does what you would by hand:
+
+1. Bump `VERSION` and rename the `[Unreleased]` section of `CHANGELOG.md` to
+   `[vX.Y.Z] - YYYY-MM-DD`, with a new empty `[Unreleased]` above it.
+2. Commit.
+3. Push to `main`.
+
+Once the tests pass, CI publishes the package and its docs to Hex and creates
+the GitHub release. A release that failed before its tag was created can be
+retried by running the CI workflow on `main`.
 
 ## License
 

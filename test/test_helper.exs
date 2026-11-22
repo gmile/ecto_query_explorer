@@ -15,4 +15,4 @@ Ecto.Migrator.run(
 
 Ecto.Adapters.SQL.Sandbox.mode(EctoQueryExplorer.TestRepo, :manual)
 
-ExUnit.start()
+ExUnit.start(exclude: [:integration])

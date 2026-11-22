@@ -86,19 +86,6 @@
               gh release create "v$VERSION" --target "$(git rev-parse HEAD)" --generate-notes
             '';
           };
-          postgres = pkgs.writeShellApplication {
-            name = "postgres";
-            runtimeInputs = [
-              pkgs.coreutils
-              pkgs.postgresql
-            ];
-            text = ''
-              data=$(mktemp --directory)
-              trap 'rm --recursive --force "$data"' EXIT
-              initdb --username postgres --auth trust --encoding UTF8 --no-locale "$data" > /dev/null
-              postgres -D "$data" -h 127.0.0.1 -k "" "$@"
-            '';
-          };
         }
       );
 
@@ -136,6 +123,7 @@
                 ./LICENSE
               ],
               command,
+              check ? "",
             }:
             pkgs.stdenv.mkDerivation {
               inherit name;
@@ -154,6 +142,12 @@
                 cp --recursive --no-preserve=mode ${deps} deps
                 mix deps.compile --no-deps-check
                 ${command}
+              '';
+              doCheck = check != "";
+              checkPhase = ''
+                runHook preCheck
+                ${check}
+                runHook postCheck
               '';
               installPhase = "touch $out";
             };
@@ -175,20 +169,16 @@
         {
           test = mix {
             name = "test";
-            inputs = [ pkgs.postgresql ];
+            inputs = lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+              pkgs.postgresql
+              pkgs.postgresqlTestHook
+            ];
             command = ''
               mix format --check-formatted
               mix compile --warnings-as-errors
               mix deps.unlock --check-unused
-              export PGHOST=$PWD
-              ${
-                lib.getExe self.packages.${pkgs.stdenv.hostPlatform.system}.postgres
-              } -h "" -k "$PGHOST" &> postgres.log &
-              timeout 60 bash -c 'until pg_isready --quiet; do sleep 1; done' ||
-                { cat postgres.log; exit 1; }
-              mix test --warnings-as-errors
-              kill %1
             '';
+            check = "mix test --warnings-as-errors ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux "--include integration"}";
           };
           docs = mix {
             name = "docs";

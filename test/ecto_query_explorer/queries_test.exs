@@ -18,8 +18,6 @@ defmodule EctoQueryExplorer.QueriesTest do
       ]
     )
 
-    setup_app_repo()
-
     :ok
   end
 
@@ -86,7 +84,9 @@ defmodule EctoQueryExplorer.QueriesTest do
   end
 
   describe "explain" do
+    @tag :integration
     test "returns json with explain data" do
+      setup_app_repo()
       create_query()
 
       assert %{

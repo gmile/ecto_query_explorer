@@ -96,19 +96,18 @@ nix fmt
 
 ## Running tests
 
-Run everything CI runs, which is the tests against PostgreSQL from nixpkgs,
-the docs and dialyzer:
+Run everything CI runs, which is the tests, the docs and dialyzer:
 
 ```sh
 nix flake check
 ```
 
-Or run the tests yourself, against a throwaway PostgreSQL listening on
-`PGPORT`, 5432 by default:
+One test needs PostgreSQL and is left out of a plain `mix test`. On Linux the
+check above starts a PostgreSQL from nixpkgs and includes it. To run it
+yourself, against a PostgreSQL on `localhost:5432` with a `postgres` user:
 
 ```sh
-nix run .#postgres &
-mix test
+mix test --include integration
 ```
 
 ## Releasing

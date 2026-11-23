@@ -16,9 +16,8 @@ defmodule EctoQueryExplorer.MixProject do
       package: package(),
       docs: docs(),
       dialyzer: [
-        plt_add_apps: [:mix],
-        plt_local_path: "priv/plts",
-        plt_core_path: "priv/plts"
+        plt_local_path: "_build/plts",
+        plt_core_path: "_build/plts"
       ],
       name: "EctoQueryExplorer",
       description: "Collect and analyze Ecto query telemetry",

@@ -103,7 +103,7 @@
                 ./VERSION
               ];
             };
-            mixEnv = "dev";
+            mixEnv = "";
             hash = "sha256-HbNFKr9p67EqmKOAo0PF9T8xZzGk7N2k+bHwOA31csw=";
           };
           mix =
@@ -111,26 +111,23 @@
               name,
               env ? "test",
               inputs ? [ ],
-              files ? [
-                ./.formatter.exs
-                ./mix.exs
-                ./mix.lock
-                ./config
-                ./lib
-                ./test
-                ./README.md
-                ./CHANGELOG.md
-                ./LICENSE
-              ],
-              start ? "cp --recursive --no-preserve=mode ${compiled.${env}}/. .",
+              files ? [ ],
+              setup ? "cp --recursive --no-preserve=mode ${compiled.${env}}/. .",
               command,
-              check ? "",
+              output ? "touch $out",
             }:
             pkgs.stdenv.mkDerivation {
               inherit name;
               src = lib.fileset.toSource {
                 root = ./.;
-                fileset = lib.fileset.unions files;
+                fileset = lib.fileset.unions (
+                  [
+                    ./mix.exs
+                    ./mix.lock
+                    ./config
+                  ]
+                  ++ files
+                );
               };
               nativeBuildInputs = mixTools beam ++ inputs;
               MIX_ENV = env;
@@ -140,30 +137,24 @@
                 export HOME=$TMPDIR MIX_DEPS_PATH=$PWD/deps
                 echo 0.0.0 > VERSION
                 echo 'config :exqlite, force_build: true' >> config/config.exs
-                ${start}
-                ${command}
+                ${setup}
               '';
-              doCheck = check != "";
+              doCheck = true;
               checkPhase = ''
                 runHook preCheck
-                ${check}
+                ${command}
                 runHook postCheck
               '';
-              installPhase = "touch $out";
+              installPhase = output;
             };
           compiled = lib.genAttrs [ "dev" "test" ] (
             env:
             mix {
               name = "deps-${env}";
               inherit env;
-              files = [
-                ./mix.exs
-                ./mix.lock
-                ./config
-              ];
-              start = "cp --recursive --no-preserve=mode ${deps} deps";
-              command = ''
-                mix deps.compile --no-deps-check
+              setup = "cp --recursive --no-preserve=mode ${deps} deps";
+              command = "mix deps.compile --no-deps-check";
+              output = ''
                 mkdir $out
                 cp --recursive deps _build $out
               '';
@@ -172,43 +163,46 @@
           plt = mix {
             name = "plt";
             env = "dev";
-            files = [
-              ./mix.exs
-              ./mix.lock
-              ./config
-            ];
-            command = ''
-              mix dialyzer --plt
+            command = "mix dialyzer --plt";
+            output = ''
               mkdir $out
-              cp priv/plts/*.plt $out
+              cp _build/plts/*.plt $out
             '';
           };
         in
         {
           test = mix {
             name = "test";
-            inputs = lib.optionals pkgs.stdenv.hostPlatform.isLinux [
-              pkgs.postgresql
-              pkgs.postgresqlTestHook
+            files = [
+              ./.formatter.exs
+              ./lib
+              ./test
             ];
             command = ''
               mix format --check-formatted
               mix compile --warnings-as-errors
               mix deps.unlock --check-unused
+              mix test --warnings-as-errors
             '';
-            check = "mix test --warnings-as-errors --include integration";
           };
           docs = mix {
             name = "docs";
             env = "dev";
+            files = [
+              ./lib
+              ./README.md
+              ./CHANGELOG.md
+              ./LICENSE
+            ];
             command = "mix docs --warnings-as-errors";
           };
           dialyzer = mix {
             name = "dialyzer";
             env = "dev";
+            files = [ ./lib ];
             command = ''
-              mkdir -p priv/plts
-              cp ${plt}/* priv/plts
+              mkdir _build/plts
+              cp ${plt}/* _build/plts
               mix dialyzer --no-check
             '';
           };
@@ -225,6 +219,20 @@
                 find $src -name '*.nix' -exec nixfmt --check {} +
                 touch $out
               '';
+        }
+        // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+          integration = mix {
+            name = "integration";
+            inputs = [
+              pkgs.postgresql
+              pkgs.postgresqlTestHook
+            ];
+            files = [
+              ./lib
+              ./test
+            ];
+            command = "mix test --only integration";
+          };
         }
       );
 

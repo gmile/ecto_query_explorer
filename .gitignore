@@ -26,5 +26,4 @@ ecto_query_explorer-*.tar
 /tmp/
 
 ecto-query-explorer-*.sqlite3*
-/priv/plts/
 /result*

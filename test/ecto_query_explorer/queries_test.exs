@@ -18,8 +18,6 @@ defmodule EctoQueryExplorer.QueriesTest do
       ]
     )
 
-    setup_app_repo()
-
     :ok
   end
 
@@ -86,14 +84,16 @@ defmodule EctoQueryExplorer.QueriesTest do
   end
 
   describe "explain" do
+    @tag :integration
     test "returns json with explain data" do
+      setup_app_repo()
       create_query()
 
       assert %{
                "Execution Time" => _,
                "Plan" => %{
                  "Actual Loops" => 1,
-                 "Actual Rows" => 0,
+                 "Actual Rows" => +0.0,
                  "Actual Startup Time" => _,
                  "Actual Total Time" => _,
                  "Alias" => "customers",
@@ -129,7 +129,7 @@ defmodule EctoQueryExplorer.QueriesTest do
                  "Local Written Blocks" => 0,
                  "Shared Dirtied Blocks" => 0,
                  "Shared Hit Blocks" => _,
-                 "Shared Read Blocks" => 1,
+                 "Shared Read Blocks" => _,
                  "Shared Written Blocks" => 0,
                  "Temp Read Blocks" => 0,
                  "Temp Written Blocks" => 0

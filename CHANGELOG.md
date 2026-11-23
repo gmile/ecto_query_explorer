@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SQLite assigns sample ids, and `samples_to_keep` applies to what is stored,
   across nodes and restarts.
 - Dumps are named after the node instead of `"1"`.
+- Requires `ecto_sqlite3` 0.26 or newer, which brings Ecto 3.14.
 
 ### Upgrading
 
@@ -35,8 +36,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On a network volume, set `journal_mode: :delete` on the SQLite repo.
 - While pods on an older version are still running, do not call
   `dump2sqlite/1` on them: it overwrites the counters.
-
-- Requires `ecto_sqlite3` 0.26 or newer, which brings Ecto 3.14.
 
 ### Removed
 

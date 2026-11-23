@@ -85,7 +85,7 @@ defmodule EctoQueryExplorer.WriterTest do
 
     run_query()
 
-    assert {:error, reason} = EctoQueryExplorer.Data.dump2sqlite()
+    assert {:error, [{:nonode@nohost, reason}]} = EctoQueryExplorer.Data.dump2sqlite()
     assert reason =~ "MissingRepo"
   end
 end

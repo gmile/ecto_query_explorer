@@ -25,6 +25,7 @@ defmodule EctoQueryExplorer.SetupTest do
 
     :ok = Ecto.Adapters.SQL.Sandbox.mode(Repo, :manual)
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
+    :ok = Ecto.Adapters.SQL.Sandbox.mode(Repo, {:shared, self()})
 
     Ecto.Migrator.run(Repo, [{0, EctoQueryExplorer.Migration0}, {1, EctoQueryExplorer.Migration1}], :up,
       all: true,
@@ -43,6 +44,7 @@ defmodule EctoQueryExplorer.SetupTest do
           otp_app: :my_app,
           ets_table_name: :ecto_query_explorer_data,
           repo: Repo,
+          flush_interval: false,
           source_ecto_repos: [
             MyApp.Repo1,
             MyApp.Repo2,
@@ -52,7 +54,7 @@ defmodule EctoQueryExplorer.SetupTest do
         ]
       )
 
-      {:ok, _pid} = EctoQueryExplorer.start_link()
+      start_supervised!(EctoQueryExplorer)
 
       metadata = %{
         cast_params: nil,

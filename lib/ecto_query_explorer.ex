@@ -41,6 +41,12 @@ defmodule EctoQueryExplorer do
 
   # Client
 
+  def child_spec(_options) do
+    children = [%{id: __MODULE__, start: {__MODULE__, :start_link, []}}, EctoQueryExplorer.Writer]
+
+    %{id: __MODULE__, type: :supervisor, start: {Supervisor, :start_link, [children, [strategy: :one_for_one]]}}
+  end
+
   def start_link(_options \\ []) do
     options =
       Application.get_all_env(:ecto_query_explorer)
@@ -74,6 +80,8 @@ defmodule EctoQueryExplorer do
       ets_table_name: state[:ets_table_name],
       samples_to_keep: state[:samples_to_keep]
     ]
+
+    :telemetry.detach(__MODULE__)
 
     case :telemetry.attach_many(__MODULE__, events, &EctoQueryExplorer.handle_event/4, config) do
       :ok ->

@@ -108,7 +108,7 @@ defmodule EctoQueryExplorer.Data do
       EctoQueryExplorer.Data.dump2sqlite(name: "v1.2.3-pod-abc123")
   """
   def dump2sqlite(opts \\ []) do
-    merge(EctoQueryExplorer.drain(), opts[:name] || "1")
+    EctoQueryExplorer.Writer.flush(opts)
   end
 
   @doc false

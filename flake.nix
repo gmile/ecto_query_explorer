@@ -176,6 +176,10 @@
         {
           test = mix {
             name = "test";
+            inputs = lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+              pkgs.postgresql
+              pkgs.postgresqlTestHook
+            ];
             files = [
               ./.formatter.exs
               ./lib
@@ -186,7 +190,7 @@
               mix compile --warnings-as-errors
               mix deps.unlock --check-unused
               mix xref graph --format cycles --label compile-connected --fail-above 0
-              mix test --warnings-as-errors
+              mix test --warnings-as-errors --include integration
             '';
           };
           docs = mix {
@@ -223,20 +227,6 @@
                 find $src -name '*.nix' -exec nixfmt --check {} +
                 touch $out
               '';
-        }
-        // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-          integration = mix {
-            name = "integration";
-            inputs = [
-              pkgs.postgresql
-              pkgs.postgresqlTestHook
-            ];
-            files = [
-              ./lib
-              ./test
-            ];
-            command = "mix test --only integration";
-          };
         }
       );
 

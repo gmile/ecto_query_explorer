@@ -74,6 +74,7 @@ defmodule EctoQueryExplorer.SetupTest do
 
       assert 1 == Repo.one(from(q in Query, select: count(q.id)))
       assert 4 == Repo.one(from(s in Sample, select: count(s.id)))
+      assert %{total_records: 0} = EctoQueryExplorer.Data.ets_stats()
     end
   end
 end

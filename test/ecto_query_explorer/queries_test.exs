@@ -10,24 +10,7 @@ defmodule EctoQueryExplorer.QueriesTest do
       warn: false
   end
 
-  setup_all do
-    Application.put_all_env(
-      ecto_query_explorer: [
-        ets_table_name: :testing_data_dump,
-        repo: Repo
-      ]
-    )
-
-    :ok
-  end
-
   setup do
-    if :ets.whereis(:testing_data_dump) != :undefined do
-      :ets.delete(:testing_data_dump)
-    end
-
-    :ets.new(:testing_data_dump, [:ordered_set, :named_table])
-
     Application.put_env(:my_app, Repo,
       database: ":memory:",
       pool: Ecto.Adapters.SQL.Sandbox,
@@ -89,6 +72,8 @@ defmodule EctoQueryExplorer.QueriesTest do
       setup_app_repo()
       create_query()
 
+      [[sample_id]] = Repo.query!("select id from samples").rows
+
       assert %{
                "Execution Time" => _,
                "Plan" => %{
@@ -136,7 +121,7 @@ defmodule EctoQueryExplorer.QueriesTest do
                },
                "Planning Time" => _,
                "Triggers" => []
-             } = Queries.explain(123)
+             } = Queries.explain(sample_id)
     end
   end
 
@@ -149,7 +134,7 @@ defmodule EctoQueryExplorer.QueriesTest do
   end
 
   def create_query do
-    :ets.insert_new(:testing_data_dump, [
+    rows = [
       {{:functions, 10_545_222}, "Elixir.Ecto.Repo.Supervisor", "tuplet", 2},
       {{:functions, 13_607_698}, "gen_server", "init_it", 6},
       {{:functions, 45_708_481}, "Elixir.App.Repo", "all", 2},
@@ -172,9 +157,9 @@ defmodule EctoQueryExplorer.QueriesTest do
       {{:stacktrace_entries, 98_253_173}, 59_205_549, 113_359_675, 30_117_895, 2},
       {{:stacktrace_entries, 119_695_449}, 59_205_549, 45_708_481, 30_369_914, 1},
       {{:stacktraces, 59_205_549}, 1}
-    ])
+    ]
 
-    EctoQueryExplorer.Data.dump2sqlite()
+    EctoQueryExplorer.Data.merge(rows, "1")
   end
 
   defp setup_app_repo do

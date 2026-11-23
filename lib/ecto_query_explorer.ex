@@ -53,6 +53,10 @@ defmodule EctoQueryExplorer do
     GenServer.cast(__MODULE__, {:handle_event, event, measurements, metadata, config})
   end
 
+  def drain do
+    GenServer.call(__MODULE__, :drain)
+  end
+
   # Server
 
   @impl true
@@ -89,6 +93,15 @@ defmodule EctoQueryExplorer do
     })
 
     {:noreply, Keyword.update!(state, :last_sample_id, fn _existing_value -> sample_id end)}
+  end
+
+  @impl true
+  def handle_call(:drain, _from, state) do
+    table = state[:ets_table_name]
+    rows = table |> :ets.tab2list() |> Enum.filter(&(tuple_size(elem(&1, 0)) == 2))
+    :ets.delete_all_objects(table)
+
+    {:reply, rows, state}
   end
 
   defp telemetry_prefix(otp_app, repo) do

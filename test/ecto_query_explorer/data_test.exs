@@ -7,7 +7,8 @@ defmodule EctoQueryExplorer.DataTest do
   alias EctoQueryExplorer.TestRepo, as: Repo
 
   setup do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
+    owner = Ecto.Adapters.SQL.Sandbox.start_owner!(Repo)
+    on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(owner) end)
 
     Application.put_env(:ecto_query_explorer, :ets_table_name, :testing_data_dump)
     Application.put_env(:ecto_query_explorer, :repo, Repo)

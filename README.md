@@ -46,8 +46,8 @@ Collect and analyze Ecto query telemetry. Find which code produces which queries
 
     ```elixir
     children = [
-      EctoQueryExplorer,
-      MyApp.EctoQueryExplorerRepo
+      MyApp.EctoQueryExplorerRepo,
+      EctoQueryExplorer
     ]
     ```
 
@@ -55,14 +55,25 @@ Collect and analyze Ecto query telemetry. Find which code produces which queries
 
     ```elixir
     # In a migration file
-    def up, do: EctoQueryExplorer.Migration0.up()
-    def down, do: EctoQueryExplorer.Migration0.down()
+    def up do
+      EctoQueryExplorer.Migration0.up()
+      EctoQueryExplorer.Migration1.up()
+    end
+
+    def down do
+      EctoQueryExplorer.Migration1.down()
+      EctoQueryExplorer.Migration0.down()
+    end
     ```
 
 ## Usage
 
+Collected data is written to SQLite every 60 seconds and on shutdown. On
+several connected nodes sharing one SQLite file, one node does the writing;
+see the `EctoQueryExplorer` module docs.
+
 ```elixir
-# Dump collected data to SQLite
+# Write collected data to SQLite now
 EctoQueryExplorer.Data.dump2sqlite()
 
 # Find queries by pattern

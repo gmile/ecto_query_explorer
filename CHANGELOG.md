@@ -7,7 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Clustering. On connected nodes every node collects and one node, chosen
+  through `:global`, writes to SQLite. Nothing to configure.
+- `:flush_interval` configuration.
+
 ### Changed
+
+- Collected data is written to SQLite every 60 seconds and on shutdown, not
+  only when `dump2sqlite/1` is called. Set `flush_interval: false` to keep
+  writing by hand.
+- `dump2sqlite/1` flushes every connected node, empties ETS and adds to the
+  stored counters instead of overwriting them. It returns `:ok` or
+  `{:error, failures}`. `ets_stats/0` reports what was collected since the
+  last flush.
+- SQLite assigns sample ids, and `samples_to_keep` applies to what is stored,
+  across nodes and restarts.
+- Dumps are named after the node instead of `"1"`.
+
+### Upgrading
+
+- List the SQLite repo before `EctoQueryExplorer` in your supervision tree,
+  so the last flush on shutdown has a repo to write to.
+- Counters stored by earlier versions were overwritten on each dump rather
+  than added, so start from a new SQLite file if you need them exact.
+- On a network volume, set `journal_mode: :delete` on the SQLite repo.
+- While pods on an older version are still running, do not call
+  `dump2sqlite/1` on them: it overwrites the counters.
 
 - Requires `ecto_sqlite3` 0.26 or newer, which brings Ecto 3.14.
 

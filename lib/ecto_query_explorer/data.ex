@@ -6,10 +6,10 @@ defmodule EctoQueryExplorer.Data do
 
   ## Usage
 
-      # Check what's in ETS before dumping
+      # Check what has been collected since the last flush
       EctoQueryExplorer.Data.ets_stats()
 
-      # Dump ETS data to SQLite
+      # Flush every connected node to SQLite now
       EctoQueryExplorer.Data.dump2sqlite()
 
       # Check SQLite table sizes
@@ -17,12 +17,8 @@ defmodule EctoQueryExplorer.Data do
 
   ## Dumps
 
-  Each dump creates a "dump" record to track data provenance. This is useful
-  when merging data from multiple pods or deployments - you can see which dump
-  each sample came from.
-
-      EctoQueryExplorer.Data.dump2sqlite(name: "api-pod-abc123")
-
+  Each node records its data under a dump named after it, so you can see
+  which node a sample came from.
   """
 
   import Ecto.Query, only: [from: 2]
@@ -96,16 +92,21 @@ defmodule EctoQueryExplorer.Data do
   end
 
   @doc """
-  Dumps ETS data to SQLite database.
+  Moves the data collected on every connected node into the SQLite database.
+
+  This also happens on its own every `:flush_interval`. Counters are added to
+  the ones already stored. Returns `:ok`, or `{:error, failures}` listing the
+  nodes whose data could not be written.
 
   ## Options
 
-    * `:name` - Name for this epoch. Defaults to "1".
+    * `:name` - Name of the dump to record this flush under, on every node.
+      Defaults to each node's name.
 
   ## Examples
 
       EctoQueryExplorer.Data.dump2sqlite()
-      EctoQueryExplorer.Data.dump2sqlite(name: "v1.2.3-pod-abc123")
+      EctoQueryExplorer.Data.dump2sqlite(name: "v1.2.3")
   """
   def dump2sqlite(opts \\ []) do
     EctoQueryExplorer.Writer.flush(opts)

@@ -6,10 +6,10 @@ defmodule EctoQueryExplorer.Data do
 
   ## Usage
 
-      # Check what's in ETS before dumping
+      # Check what has been collected since the last flush
       EctoQueryExplorer.Data.ets_stats()
 
-      # Dump ETS data to SQLite
+      # Flush every connected node to SQLite now
       EctoQueryExplorer.Data.dump2sqlite()
 
       # Check SQLite table sizes
@@ -17,15 +17,11 @@ defmodule EctoQueryExplorer.Data do
 
   ## Dumps
 
-  Each dump creates a "dump" record to track data provenance. This is useful
-  when merging data from multiple pods or deployments - you can see which dump
-  each sample came from.
-
-      EctoQueryExplorer.Data.dump2sqlite(name: "api-pod-abc123")
-
+  Each node records its data under a dump named after it, so you can see
+  which node a sample came from.
   """
 
-  require Logger
+  import Ecto.Query, only: [from: 2]
 
   alias EctoQueryExplorer.{
     Dump,
@@ -36,6 +32,17 @@ defmodule EctoQueryExplorer.Data do
     Function,
     Location
   }
+
+  @sqlite_params_limit 32766
+
+  @tables [
+    queries: {Query, [:text, :repo, :source, :counter]},
+    locations: {Location, [:file, :line]},
+    functions: {Function, [:module, :function, :arity]},
+    stacktraces: {Stacktrace, [:counter]},
+    samples: {Sample, [:query_id, :total_time, :queue_time, :query_time, :decode_time, :stacktrace_id, :params]},
+    stacktrace_entries: {StacktraceEntry, [:stacktrace_id, :function_id, :location_id, :index]}
+  ]
 
   def ets_stats do
     ets_table = Application.fetch_env!(:ecto_query_explorer, :ets_table_name)
@@ -85,104 +92,51 @@ defmodule EctoQueryExplorer.Data do
   end
 
   @doc """
-  Dumps ETS data to SQLite database.
+  Moves the data collected on every connected node into the SQLite database.
+
+  This also happens on its own every `:flush_interval`. Counters are added to
+  the ones already stored. Returns `:ok`, or `{:error, failures}` listing the
+  nodes whose data could not be written.
 
   ## Options
 
-    * `:name` - Name for this epoch. Defaults to "1".
+    * `:name` - Name of the dump to record this flush under, on every node.
+      Defaults to each node's name.
 
   ## Examples
 
       EctoQueryExplorer.Data.dump2sqlite()
-      EctoQueryExplorer.Data.dump2sqlite(name: "v1.2.3-pod-abc123")
+      EctoQueryExplorer.Data.dump2sqlite(name: "v1.2.3")
   """
   def dump2sqlite(opts \\ []) do
-    ets_table = Application.fetch_env!(:ecto_query_explorer, :ets_table_name)
-    repo = Application.fetch_env!(:ecto_query_explorer, :repo)
-
-    dump_id = create_dump(repo, opts)
-    Logger.info("Created epoch #{dump_id}")
-
-    queries_spec =
-      {{{:queries, :"$1"}, :"$2", :"$3", :"$4", :"$5"}, [],
-       [%{id: :"$1", text: :"$2", repo: :"$3", source: :"$4", counter: :"$5"}]}
-
-    samples_spec =
-      {{{:samples, :"$1"}, :"$2", :"$3", :"$4", :"$5", :"$6", :"$7", :"$8"}, [],
-       [
-         %{
-           id: :"$1",
-           query_id: :"$2",
-           total_time: :"$3",
-           queue_time: :"$4",
-           query_time: :"$5",
-           decode_time: :"$6",
-           stacktrace_id: :"$7",
-           params: :"$8"
-         }
-       ]}
-
-    functions_spec =
-      {{{:functions, :"$1"}, :"$2", :"$3", :"$4"}, [], [%{id: :"$1", module: :"$2", function: :"$3", arity: :"$4"}]}
-
-    locations_spec =
-      {{{:locations, :"$1"}, :"$2", :"$3"}, [], [%{id: :"$1", file: :"$2", line: :"$3"}]}
-
-    stacktrace_entries_spec =
-      {{{:stacktrace_entries, :"$1"}, :"$2", :"$3", :"$4", :"$5"}, [],
-       [
-         %{
-           id: :"$1",
-           stacktrace_id: :"$2",
-           function_id: :"$3",
-           location_id: :"$4",
-           index: :"$5"
-         }
-       ]}
-
-    stacktraces_spec =
-      {{{:stacktraces, :"$1"}, :"$2"}, [],
-       [
-         %{
-           id: :"$1",
-           counter: :"$2"
-         }
-       ]}
-
-    [
-      {{:queries, :_}, :_, :_, :_, :_},
-      {{:samples, :_}, :_, :_, :_, :_, :_, :_, :_},
-      {{:functions, :_}, :_, :_, :_},
-      {{:locations, :_}, :_, :_},
-      {{:stacktrace_entries, :_}, :_, :_, :_, :_},
-      {{:stacktraces, :_}, :_}
-    ]
-    |> Enum.each(fn item ->
-      name = elem(elem(item, 0), 0)
-      count = :ets.select_count(ets_table, [{item, [], [true]}])
-
-      Logger.info("Preparing to dump #{count} #{name}")
-    end)
-
-    sqlite_params_limit = 32766
-
-    insert_in_batches(repo, Query, queries_spec, ets_table, div(sqlite_params_limit, 5), nil, replace: [:counter])
-    insert_in_batches(repo, Location, locations_spec, ets_table, div(sqlite_params_limit, 3), dump_id)
-    insert_in_batches(repo, Function, functions_spec, ets_table, div(sqlite_params_limit, 4))
-
-    insert_in_batches(repo, Stacktrace, stacktraces_spec, ets_table, div(sqlite_params_limit, 2), dump_id,
-      replace: [:counter]
-    )
-
-    insert_in_batches(repo, Sample, samples_spec, ets_table, div(sqlite_params_limit, 8), dump_id)
-    insert_in_batches(repo, StacktraceEntry, stacktrace_entries_spec, ets_table, div(sqlite_params_limit, 5))
-
-    Logger.info("Collected data is now available to query using #{repo} repo (#{repo.config()[:database]} database)")
+    EctoQueryExplorer.Writer.flush(opts)
   end
 
-  defp create_dump(repo, opts) do
-    name = opts[:name] || "1"
+  @doc false
+  def merge(rows, dump_name) do
+    repo = Application.fetch_env!(:ecto_query_explorer, :repo)
+    grouped = Enum.group_by(rows, &elem(elem(&1, 0), 0))
 
+    {:ok, :ok} =
+      repo.transaction(fn ->
+        dump_id = create_dump(repo, dump_name)
+
+        for {kind, {schema, columns}} <- @tables, kind_rows = grouped[kind] do
+          [item | _] = items = Enum.map(kind_rows, &item(&1, schema, columns, dump_id))
+          conflict = if :counter in columns, do: add_counter(schema), else: [on_conflict: :nothing]
+
+          items
+          |> Enum.chunk_every(div(@sqlite_params_limit, map_size(item)))
+          |> Enum.each(&repo.insert_all(schema, &1, conflict))
+        end
+
+        trim_samples(repo, grouped[:samples], Application.get_env(:ecto_query_explorer, :samples_to_keep))
+      end)
+
+    :ok
+  end
+
+  defp create_dump(repo, name) do
     {_, [%{id: dump_id}]} =
       repo.insert_all(Dump, [%{name: name, collected_at: DateTime.utc_now()}],
         on_conflict: {:replace, [:collected_at]},
@@ -193,35 +147,44 @@ defmodule EctoQueryExplorer.Data do
     dump_id
   end
 
-  def insert_in_batches(repo, schema, spec, ets_table, batch_size, dump_id \\ nil, opts \\ []) do
-    result =
-      if is_atom(ets_table) do
-        :ets.select(ets_table, [spec], batch_size)
-      else
-        :ets.select(ets_table)
-      end
+  defp item(row, schema, columns, dump_id) do
+    [{_kind, id} | values] = Tuple.to_list(row)
 
-    do_insert_in_batches(repo, schema, result, batch_size, dump_id, opts)
+    item = columns |> Enum.zip(values) |> Map.new()
+    item = if schema == Sample, do: item, else: Map.put(item, :id, id)
+
+    if :dump_id in schema.__schema__(:fields), do: Map.put(item, :dump_id, dump_id), else: item
   end
 
-  defp do_insert_in_batches(_repo, _schema, :"$end_of_table", _batch_size, _dump_id, _opts), do: :ok
-
-  defp do_insert_in_batches(repo, schema, {items, :"$end_of_table"}, _batch_size, dump_id, opts) do
-    items = maybe_add_dump_id(items, dump_id)
-    Logger.info("Inserting #{length(items)} records into #{inspect(schema)}")
-    repo.insert_all(schema, items, insert_opts(opts))
+  defp add_counter(schema) do
+    [
+      on_conflict: from(s in schema, update: [set: [counter: fragment("counter + excluded.counter")]]),
+      conflict_target: [:id]
+    ]
   end
 
-  defp do_insert_in_batches(repo, schema, {items, cont}, batch_size, dump_id, opts) do
-    items = maybe_add_dump_id(items, dump_id)
-    Logger.info("Inserting #{length(items)} records into #{inspect(schema)}")
-    repo.insert_all(schema, items, insert_opts(opts))
-    do_insert_in_batches(repo, schema, :ets.select(cont), batch_size, dump_id, opts)
+  defp trim_samples(_repo, samples, samples_to_keep) when is_nil(samples) or is_nil(samples_to_keep), do: :ok
+
+  defp trim_samples(repo, samples, samples_to_keep) do
+    query_ids = samples |> Enum.map(&elem(&1, 1)) |> Enum.uniq() |> Enum.join(",")
+
+    repo.query!(
+      """
+      delete from samples
+       where id in (
+         select id
+           from (
+             select id,
+                    row_number() over (partition by query_id, stacktrace_id order by total_time desc, id desc) position
+               from samples
+              where query_id in (select value from json_each(?1))
+           )
+          where position > ?2
+       )
+      """,
+      ["[#{query_ids}]", samples_to_keep]
+    )
+
+    :ok
   end
-
-  defp insert_opts([]), do: [on_conflict: :nothing]
-  defp insert_opts(replace: fields), do: [on_conflict: {:replace, fields}, conflict_target: [:id]]
-
-  defp maybe_add_dump_id(items, nil), do: items
-  defp maybe_add_dump_id(items, dump_id), do: Enum.map(items, &Map.put(&1, :dump_id, dump_id))
 end

@@ -3,15 +3,29 @@ defmodule EctoQueryExplorer do
   Collects and analyzes Ecto query telemetry data.
 
   EctoQueryExplorer hooks into Ecto's telemetry events to capture query execution data,
-  including stacktraces that show where each query originated. Data is stored in ETS
-  during runtime and can be dumped to SQLite for analysis.
+  including stacktraces that show where each query originated. Data is collected in ETS
+  and moved to SQLite on a timer, on shutdown and on demand.
 
   ## How it works
 
   1. Attaches to `[:my_app, :repo, :query]` telemetry events
   2. Captures query text, timing, parameters, and stacktraces in ETS
-  3. On demand, dumps ETS data to SQLite via `EctoQueryExplorer.Data.dump2sqlite/1`
+  3. Every `:flush_interval` moves the ETS data to SQLite, adding to what is already there
   4. Query the SQLite database using `EctoQueryExplorer.Queries` functions
+
+  ## Clustering
+
+  When the application runs on several connected nodes, every node collects but only one
+  writes to SQLite. The others send it what they collected. The writer is chosen through
+  `:global`, and another node takes over when it goes away. Nothing has to be configured:
+  nodes that are not connected each write on their own.
+
+  The SQLite file must be reachable from every node, since any of them can become the
+  writer. On a network volume, configure the SQLite repo with `journal_mode: :delete`.
+
+  Data collected since the last flush is lost when a node is killed, or when the writer
+  cannot be reached. A flush is never retried, so counters can be low but are never
+  counted twice.
 
   ## Configuration
 
@@ -21,6 +35,9 @@ defmodule EctoQueryExplorer do
         ets_table_name: :ecto_query_explorer_data,
         samples_to_keep: 5,
         source_ecto_repos: [MyApp.Repo]
+
+  `:flush_interval` is optional: milliseconds between flushes, 60 seconds by default,
+  or `false` to flush only through `EctoQueryExplorer.Data.dump2sqlite/1`.
 
   ## Database schema
 
@@ -32,7 +49,7 @@ defmodule EctoQueryExplorer do
   - `stacktrace_entries` - individual stack frames
   - `functions` - unique module/function/arity combinations
   - `locations` - unique file/line combinations
-  - `dumps` - data provenance tracking for multi-pod environments
+  - `dumps` - which node the data came from
 
   See the schema diagram in the repository for relationships.
   """
@@ -40,6 +57,12 @@ defmodule EctoQueryExplorer do
   use GenServer
 
   # Client
+
+  def child_spec(_options) do
+    children = [%{id: __MODULE__, start: {__MODULE__, :start_link, []}}, EctoQueryExplorer.Writer]
+
+    %{id: __MODULE__, type: :supervisor, start: {Supervisor, :start_link, [children, [strategy: :one_for_one]]}}
+  end
 
   def start_link(_options \\ []) do
     options =
@@ -51,6 +74,10 @@ defmodule EctoQueryExplorer do
 
   def handle_event(event, measurements, metadata, config) do
     GenServer.cast(__MODULE__, {:handle_event, event, measurements, metadata, config})
+  end
+
+  def drain do
+    GenServer.call(__MODULE__, :drain)
   end
 
   # Server
@@ -71,6 +98,8 @@ defmodule EctoQueryExplorer do
       samples_to_keep: state[:samples_to_keep]
     ]
 
+    :telemetry.detach(__MODULE__)
+
     case :telemetry.attach_many(__MODULE__, events, &EctoQueryExplorer.handle_event/4, config) do
       :ok ->
         {:ok, state}
@@ -89,6 +118,15 @@ defmodule EctoQueryExplorer do
     })
 
     {:noreply, Keyword.update!(state, :last_sample_id, fn _existing_value -> sample_id end)}
+  end
+
+  @impl true
+  def handle_call(:drain, _from, state) do
+    table = state[:ets_table_name]
+    rows = table |> :ets.tab2list() |> Enum.filter(&(tuple_size(elem(&1, 0)) == 2))
+    :ets.delete_all_objects(table)
+
+    {:reply, rows, state}
   end
 
   defp telemetry_prefix(otp_app, repo) do

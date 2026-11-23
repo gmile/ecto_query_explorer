@@ -47,7 +47,7 @@ defmodule EctoQueryExplorer.DataTest do
              } == EctoQueryExplorer.Data.repo_stats()
 
       create_query()
-      EctoQueryExplorer.Data.dump2sqlite()
+      dump()
 
       assert %Exqlite.Result{
                command: :execute,
@@ -69,18 +69,9 @@ defmodule EctoQueryExplorer.DataTest do
   end
 
   describe "dumps" do
-    test "creates dump with default name" do
-      create_query()
-      EctoQueryExplorer.Data.dump2sqlite()
-
-      dump = Repo.one(Dump)
-      assert dump.name == "1"
-      assert dump.collected_at != nil
-    end
-
     test "creates dump with custom name" do
       create_query()
-      EctoQueryExplorer.Data.dump2sqlite(name: "my-custom-dump")
+      dump("my-custom-dump")
 
       dump = Repo.one(Dump)
       assert dump.name == "my-custom-dump"
@@ -88,7 +79,7 @@ defmodule EctoQueryExplorer.DataTest do
 
     test "associates dump_id with locations, stacktraces, and samples" do
       create_query()
-      EctoQueryExplorer.Data.dump2sqlite(name: "test-dump")
+      dump("test-dump")
 
       dump = Repo.one(Dump)
 
@@ -112,39 +103,34 @@ defmodule EctoQueryExplorer.DataTest do
       assert Enum.all?(functions, &(not Map.has_key?(&1, :dump_id)))
     end
 
-    test "data accumulates across dumps: same dump = no ETS reset, new dump = ETS reset" do
-      # Pod 1: first dump
+    test "adds counters to the ones stored by earlier dumps" do
       insert_minimal_query(1, "query-1", counter: 5)
-      EctoQueryExplorer.Data.dump2sqlite(name: "pod-1")
+      dump("pod-1")
       assert_queries(%{1 => 5})
 
-      # Pod 1: second dump (no ETS reset, counter updates)
+      insert_minimal_query(1, "query-1", counter: 5)
       insert_minimal_query(2, "query-2", counter: 3)
-      update_query_counter(1, 10)
-      EctoQueryExplorer.Data.dump2sqlite(name: "pod-1")
+      dump("pod-1")
       assert_queries(%{1 => 10, 2 => 3})
 
-      # Pod 2: first dump (ETS reset, new queries)
-      :ets.delete_all_objects(:testing_data_dump)
-      insert_minimal_query(3, "query-3", counter: 7)
-      EctoQueryExplorer.Data.dump2sqlite(name: "pod-2")
-      assert_queries(%{1 => 10, 2 => 3, 3 => 7})
+      insert_minimal_query(1, "query-1", counter: 2)
+      dump("pod-2")
+      assert_queries(%{1 => 12, 2 => 3})
 
-      # Pod 2: second dump (no ETS reset, counter updates)
-      insert_minimal_query(4, "query-4", counter: 2)
-      update_query_counter(3, 15)
-      EctoQueryExplorer.Data.dump2sqlite(name: "pod-2")
-      assert_queries(%{1 => 10, 2 => 3, 3 => 15, 4 => 2})
-
-      # Pod 3: single dump (ETS reset)
-      :ets.delete_all_objects(:testing_data_dump)
-      insert_minimal_query(5, "query-5", counter: 100)
-      EctoQueryExplorer.Data.dump2sqlite(name: "pod-3")
-      assert_queries(%{1 => 10, 2 => 3, 3 => 15, 4 => 2, 5 => 100})
-
-      # Dump names are unique - subsequent dumps with same name reuse existing record
-      assert ["pod-1", "pod-2", "pod-3"] ==
+      assert ["pod-1", "pod-2"] ==
                Repo.all(from(e in Dump, select: e.name, order_by: e.id))
+    end
+
+    test "keeps the slowest samples of each query and stacktrace across dumps" do
+      Application.put_env(:ecto_query_explorer, :samples_to_keep, 2)
+      on_exit(fn -> Application.delete_env(:ecto_query_explorer, :samples_to_keep) end)
+
+      for total_time <- [100, 300, 200] do
+        insert_minimal_query(1, "query-1", total_time: total_time)
+        dump()
+      end
+
+      assert [300, 200] == Repo.all(from(s in EctoQueryExplorer.Sample, select: s.total_time, order_by: s.id))
     end
   end
 
@@ -174,7 +160,7 @@ defmodule EctoQueryExplorer.DataTest do
         {{:stacktraces, 59_205_549}, 1}
       ])
 
-      EctoQueryExplorer.Data.dump2sqlite()
+      dump()
 
       query =
         Repo.one(
@@ -201,7 +187,6 @@ defmodule EctoQueryExplorer.DataTest do
                text: "select * from customers where id = $1",
                samples: [
                  %{
-                   id: 123,
                    decode_time: 4250,
                    query_time: 944_584,
                    queue_time: 2_322_375,
@@ -324,20 +309,21 @@ defmodule EctoQueryExplorer.DataTest do
     st_id = id * 10 + 3
     ste_id = id * 10 + 4
     counter = Keyword.get(opts, :counter, 1)
+    total_time = Keyword.get(opts, :total_time, 1000)
 
     :ets.insert_new(:testing_data_dump, [
       {{:functions, func_id}, "Mod#{id}", "func", 1},
       {{:locations, loc_id}, "lib/mod#{id}.ex", id},
       {{:queries, id}, text, "App.Repo", "table", counter},
-      {{:samples, id}, id, 1000, 100, 800, 100, st_id, <<131, 106>>},
+      {{:samples, id}, id, total_time, 100, 800, 100, st_id, <<131, 106>>},
       {{:stacktrace_entries, ste_id}, st_id, func_id, loc_id, 0},
       {{:stacktraces, st_id}, 1}
     ])
   end
 
-  defp update_query_counter(id, new_counter) do
-    [{key, text, repo, source, _old_counter}] = :ets.lookup(:testing_data_dump, {:queries, id})
-    :ets.insert(:testing_data_dump, {key, text, repo, source, new_counter})
+  defp dump(name \\ "1") do
+    EctoQueryExplorer.Data.merge(:ets.tab2list(:testing_data_dump), name)
+    :ets.delete_all_objects(:testing_data_dump)
   end
 
   defp assert_queries(expected) do

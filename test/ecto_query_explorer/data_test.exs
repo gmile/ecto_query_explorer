@@ -12,7 +12,7 @@ defmodule EctoQueryExplorer.DataTest do
     Application.put_env(:ecto_query_explorer, :ets_table_name, :testing_data_dump)
     Application.put_env(:ecto_query_explorer, :repo, Repo)
 
-    :ets.new(:testing_data_dump, [:ordered_set, :named_table, :public])
+    start_supervised!({Agent, fn -> :ets.new(:testing_data_dump, [:ordered_set, :named_table, :public]) end})
 
     :ok
   end
